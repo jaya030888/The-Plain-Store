@@ -153,7 +153,8 @@ ON CONFLICT DO NOTHING;
     await pool.query(sql);
     console.log('PostgreSQL migrations applied successfully.');
   } catch (err) {
-    console.error('Migration error:', err);
+    console.error('Migration error (non-fatal):', err.message);
+    console.warn('Continuing without migrations – ensure the database schema exists.');
   } finally {
     await pool.end();
   }
