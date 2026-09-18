@@ -1,5 +1,78 @@
 # The Plain Store
 
+A premium full‑stack e‑commerce application with separate client, admin, and backend services.
+
+## Architecture
+
+- **client/** – React + Vite SPA (customer‑facing) deployed on Vercel.
+- **admin/** – React + Vite SPA (admin portal) deployed on Vercel.
+- **server/** – Node.js / Express API deployed on Render as a Web Service.
+- **PostgreSQL** – Render‑hosted PostgreSQL database.
+
+## Deployment URLs
+
+- Backend API: https://the-plain-store.onrender.com
+- Client (Vercel): <client‑vercel‑url>
+- Admin (Vercel): <admin‑vercel‑url>
+
+## Environment Variables
+
+### Server (`server/.env.example`)
+```
+DATABASE_URL=
+CLIENT_URL=
+ADMIN_URL=
+JWT_SECRET=
+PORT=5000
+```
+
+### Client & Admin (`client/.env.example`, `admin/.env.example`)
+```
+VITE_API_URL=
+```
+
+## Database Migration
+
+- Replaced `mysql2` with the `pg` driver.
+- Implemented a **smart query wrapper** in `server/config/db.js` that translates MySQL‑style `?` placeholders to PostgreSQL `$1, $2…` and maps `insertId` / `affectedRows` to the shapes expected by the existing code.
+- Created `database.postgres.sql`, a PostgreSQL‑compatible version of the original schema (tables, relationships, seed data).
+- No controller files needed manual query changes – the wrapper handles conversion automatically.
+
+## CORS Configuration
+
+`server/server.js` now reads `process.env.CLIENT_URL` and `process.env.ADMIN_URL` (plus local dev ports) and only allows those origins, securing JWT cookie handling in production.
+
+## Running Locally
+```bash
+# Backend (PostgreSQL)
+cd server
+npm install
+# Create a .env with a local Postgres connection string, e.g.:
+# DATABASE_URL=postgres://user:pass@localhost:5432/the_plain_store
+npm run dev   # runs on http://localhost:5000
+
+# Client
+cd ../client
+npm install
+npm run dev   # VITE_API_URL defaults to http://localhost:5000
+
+# Admin
+cd ../admin
+npm install
+npm run dev   # VITE_API_URL defaults to http://localhost:5000
+```
+
+## Production Workflow
+1. Commit & push to GitHub – Render pulls the latest commit, installs `pg`, builds, and connects to the Render PostgreSQL instance via `DATABASE_URL`.
+2. In Vercel, set `VITE_API_URL` (as a **Config** variable, not Secret) to `https://the-plain-store.onrender.com` for both client and admin projects and trigger a redeploy.
+3. The three services now communicate securely without any hard‑coded `localhost` URLs.
+
+## Notes
+- No UI/UX changes were made; all existing designs, animations, and features remain intact.
+- Secrets are excluded via `.gitignore`; only `.env.example` is version‑controlled.
+- The backend now uses PostgreSQL, eliminating the previous MySQL connection error.
+
+
 A full-stack, premium e-commerce application built with React, Node.js, Express, and MySQL.
 
 ## Project Architecture
@@ -17,7 +90,7 @@ The project is structured as a monorepo containing three distinct parts that sha
 - Animated hero slider that cycles through up to four featured catalog products.
 - Persistent Cart and Wishlist using MySQL (no local storage).
 - Responsive boutique navbar with a visible brand logo, product search, account/location details, language, cart, and menu controls.
-- Product details preserve the two-column desktop composition, stack cleanly on mobile, and provide an authenticated add/remove wishlist button that shares state with product-card hearts.
+- Product details preserve the two-column desktop composition, stack cleanly on mobile, and provide an authenticated add/remove wishlist button that shares state with product-card
 - Customer Account & Address Management.
 - Real-time Checkout Flow with Razorpay Payment Gateway integration.
 - Order History tracking.
