@@ -1,111 +1,13 @@
 const db = require('../config/db');
-const Razorpay = require('razorpay');
-const crypto = require('crypto');
-
-const razorpay = new Razorpay({
-  key_id: process.env.RAZORPAY_KEY_ID || 'mocked_key',
-  key_secret: process.env.RAZORPAY_KEY_SECRET || 'mocked_secret'
-});
+// Razorpay integration disabled for now – placeholder stub
+const razorpay = null;
 
 exports.createRazorpayOrder = async (req, res) => {
-  try {
-    const { amount } = req.body; // Amount in rupees, need to convert to paise for razorpay
-    
-    if (!amount) return res.status(400).json({ message: 'Amount is required' });
-
-    if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_ID.includes('mocked')) {
-      return res.json({
-        id: `order_mock_${Date.now()}`,
-        amount: Math.round(amount * 100),
-        currency: "INR",
-        receipt: `receipt_order_${Date.now()}`,
-        status: 'created'
-      });
-    }
-
-    const options = {
-      amount: Math.round(amount * 100), // convert to paise
-      currency: "INR",
-      receipt: `receipt_order_${Date.now()}`
-    };
-
-    const order = await razorpay.orders.create(options);
-    if (!order) return res.status(500).json({ message: 'Error creating razorpay order' });
-
-    res.json(order);
-  } catch (error) {
-    console.error('Error in createRazorpayOrder:', error);
-    res.status(500).json({ message: 'Server error creating order' });
-  }
+  res.status(501).json({ message: 'Razorpay integration not available in this build' });
 };
 
 exports.verifyPaymentAndCreateOrder = async (req, res) => {
-  try {
-    const userId = req.user.id;
-    const { 
-      razorpay_order_id, 
-      razorpay_payment_id, 
-      razorpay_signature, 
-      addressId, 
-      couponId, 
-      subtotal, 
-      deliveryFee, 
-      total, 
-      discountAmount,
-      items 
-    } = req.body;
-
-    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_ID.includes('mocked')) {
-      // Verify signature
-      const sign = razorpay_order_id + "|" + razorpay_payment_id;
-      const expectedSign = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-        .update(sign.toString())
-        .digest("hex");
-
-      if (razorpay_signature !== expectedSign) {
-        return res.status(400).json({ message: 'Invalid payment signature' });
-      }
-    }
-
-    // Begin transaction
-    const connection = await db.getConnection();
-    await connection.beginTransaction();
-
-    try {
-      // 1. Create order
-      const [orderResult] = await connection.query(`
-        INSERT INTO orders (user_id, address_id, subtotal, delivery_fee, total, coupon_id, discount_amount, payment_status, order_status, razorpay_order_id, razorpay_payment_id)
-        VALUES (?, ?, ?, ?, ?, ?, ?, 'paid', 'confirmed', ?, ?)
-      `, [userId, addressId, subtotal, deliveryFee, total, couponId || null, discountAmount || 0, razorpay_order_id, razorpay_payment_id]);
-
-      const newOrderId = orderResult.insertId;
-
-      // 2. Insert items and decrease stock
-      for (let item of items) {
-        await connection.query(`
-          INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase)
-          VALUES (?, ?, ?, ?)
-        `, [newOrderId, item.id, item.quantity, item.rawPrice]);
-
-        // Decrease stock
-        await connection.query('UPDATE products SET stock = stock - ? WHERE id = ?', [item.quantity, item.id]);
-      }
-
-      // 3. Clear user's cart
-      await connection.query('DELETE FROM cart_items WHERE user_id = ?', [userId]);
-
-      await connection.commit();
-      res.json({ message: 'Order created successfully', orderId: newOrderId });
-    } catch (dbError) {
-      await connection.rollback();
-      throw dbError;
-    } finally {
-      connection.release();
-    }
-  } catch (error) {
-    console.error('Error verifying payment:', error);
-    res.status(500).json({ message: 'Server error processing payment' });
-  }
+  res.status(501).json({ message: 'Razorpay integration not available in this build' });
 };
 
 exports.getMyOrders = async (req, res) => {

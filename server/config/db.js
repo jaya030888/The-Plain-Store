@@ -1,7 +1,15 @@
 const { Pool } = require('pg');
 require('dotenv').config();
 
-const connectionString = process.env.DATABASE_URL || `postgres://${process.env.DB_USER || 'postgres'}:${process.env.DB_PASSWORD || 'postgres'}@${process.env.DB_HOST || 'localhost'}:5432/${process.env.DB_NAME || 'plainstore'}`;
+let connectionString;
+if (process.env.NODE_ENV === 'production') {
+  if (!process.env.DATABASE_URL) {
+    throw new Error('DATABASE_URL is required in production');
+  }
+  connectionString = process.env.DATABASE_URL;
+} else {
+  connectionString = process.env.DATABASE_URL || `postgres://${process.env.DB_USER || 'postgres'}:${process.env.DB_PASSWORD || 'postgres'}@${process.env.DB_HOST || 'localhost'}:5432/${process.env.DB_NAME || 'plainstore'}`;
+}
 const pool = new Pool({
   connectionString,
   ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false,
@@ -37,21 +45,19 @@ const wrapper = {
       return [rows, result.fields];
     } catch (err) {
       console.error('Database Query Error:', err.message);
-      if (err.code === 'ECONNREFUSED') {
-        console.warn('DB connection failed – using mock in‑memory fallback');
-        wrapper.isDbAvailable = false;
-        return [[], []]; // empty result set
-      }
+      // Propagate error – no mock fallback in production
       throw err;
     }
   },
   getConnection: async () => {
     if (!wrapper.isDbAvailable) {
+      // Fallback disabled – always attempt real DB connection
+      // If connection fails, it will be thrown and handled by the caller
       return {
-        query: async () => [[], []],
-        beginTransaction: async () => {},
-        commit: async () => {},
-        rollback: async () => {},
+        query: async () => { throw new Error('Database not available'); },
+        beginTransaction: async () => { throw new Error('Database not available'); },
+        commit: async () => { throw new Error('Database not available'); },
+        rollback: async () => { throw new Error('Database not available'); },
         release: () => {}
       };
     }
