@@ -26,6 +26,9 @@ app.use(cors({
 }));
 app.use(express.json());
 
+// Run database migrations automatically (idempotent). This will create tables if they do not exist.
+require('./migrate_pg');
+
 // Routes
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
