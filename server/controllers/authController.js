@@ -20,13 +20,13 @@ const registerUser = async (req, res) => {
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
 
-    const [result] = await pool.query(
+    const [resultRows] = await pool.query(
       'INSERT INTO users (name, email, password_hash, role) VALUES (?, ?, ?, ?)',
       [name, email, hashedPassword, 'customer'] // ALWAYS force role to 'customer'
     );
 
     const user = {
-      id: result.insertId,
+      id: resultRows[0].id,
       name,
       email,
       role: 'customer'

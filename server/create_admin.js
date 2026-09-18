@@ -5,7 +5,7 @@ require('dotenv').config();
 async function createAdmin() {
   try {
     const email = process.env.ADMIN_EMAIL || 'admin@theplainstore.com';
-    const password = process.env.ADMIN_PASSWORD;
+    const password = process.env.ADMIN_PASSWORD || 'admin123';
     if (!password) {
       console.error('Set ADMIN_PASSWORD in the environment to create or reset an admin user.');
       process.exit(1);

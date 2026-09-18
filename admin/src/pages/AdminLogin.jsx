@@ -12,7 +12,7 @@ const AdminLogin = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
-    
+
     const result = await login(email, password);
     if (result.success) {
       navigate('/');
@@ -25,14 +25,14 @@ const AdminLogin = () => {
     <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F5F1E7' }}>
       <div style={{ maxWidth: '400px', width: '100%', padding: '40px', backgroundColor: '#fff', borderRadius: '12px', boxShadow: '0 10px 30px rgba(0,0,0,0.05)' }}>
         <h2 style={{ fontFamily: 'Dancing Script, cursive', fontSize: '2.5rem', marginBottom: '20px', textAlign: 'center', color: '#468165' }}>Admin Portal</h2>
-        
+
         {error && <div style={{ backgroundColor: '#f8d7da', color: '#721c24', padding: '10px', borderRadius: '4px', marginBottom: '20px', textAlign: 'center' }}>{error}</div>}
-        
+
         <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
           <div>
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', fontFamily: 'Inter, sans-serif' }}>Admin Email</label>
-            <input 
-              type="email" 
+            <input
+              type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
@@ -41,8 +41,8 @@ const AdminLogin = () => {
           </div>
           <div>
             <label style={{ display: 'block', marginBottom: '5px', fontWeight: '500', fontFamily: 'Inter, sans-serif' }}>Password</label>
-            <input 
-              type="password" 
+            <input
+              type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
@@ -53,10 +53,10 @@ const AdminLogin = () => {
             Login to Dashboard
           </button>
         </form>
-        
+
         <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '0.85rem', color: '#666', fontFamily: 'Inter, sans-serif' }}>
           <p style={{ margin: '0 0 5px 0' }}><strong>Test Credentials</strong></p>
-          <p style={{ margin: 0 }}>Email: admin@geobucket.com</p>
+          <p style={{ margin: 0 }}>Email: admin@theplainstore.com</p>
           <p style={{ margin: 0 }}>Password: admin123</p>
         </div>
       </div>
