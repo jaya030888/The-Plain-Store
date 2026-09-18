@@ -43,7 +43,7 @@ const registerUser = async (req, res) => {
 };
 
 const loginUser = async (req, res) => {
-  const { email, password } = req.body;
+  console.log('Login attempt:', { email, password: '[REDACTED]' });
 
   try {
     const [users] = await pool.query('SELECT * FROM users WHERE email = ?', [email]);
