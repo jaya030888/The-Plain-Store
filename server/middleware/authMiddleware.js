@@ -2,6 +2,13 @@ const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
 const protect = async (req, res, next) => {
+  // Development shortcut: bypass JWT verification when SKIP_AUTH is true
+  if (process.env.SKIP_AUTH === 'true') {
+    // Mock a user object – you can adjust as needed (admin role for full access)
+    req.user = { id: 1, role: 'admin', name: 'Dev User', email: 'dev@example.com' };
+    return next();
+  }
+
   let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
