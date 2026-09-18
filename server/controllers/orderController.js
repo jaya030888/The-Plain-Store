@@ -13,6 +13,16 @@ exports.createRazorpayOrder = async (req, res) => {
     
     if (!amount) return res.status(400).json({ message: 'Amount is required' });
 
+    if (process.env.RAZORPAY_KEY_ID && process.env.RAZORPAY_KEY_ID.includes('mocked')) {
+      return res.json({
+        id: `order_mock_${Date.now()}`,
+        amount: Math.round(amount * 100),
+        currency: "INR",
+        receipt: `receipt_order_${Date.now()}`,
+        status: 'created'
+      });
+    }
+
     const options = {
       amount: Math.round(amount * 100), // convert to paise
       currency: "INR",
@@ -45,14 +55,16 @@ exports.verifyPaymentAndCreateOrder = async (req, res) => {
       items 
     } = req.body;
 
-    // Verify signature
-    const sign = razorpay_order_id + "|" + razorpay_payment_id;
-    const expectedSign = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
-      .update(sign.toString())
-      .digest("hex");
+    if (!process.env.RAZORPAY_KEY_ID || !process.env.RAZORPAY_KEY_ID.includes('mocked')) {
+      // Verify signature
+      const sign = razorpay_order_id + "|" + razorpay_payment_id;
+      const expectedSign = crypto.createHmac("sha256", process.env.RAZORPAY_KEY_SECRET)
+        .update(sign.toString())
+        .digest("hex");
 
-    if (razorpay_signature !== expectedSign) {
-      return res.status(400).json({ message: 'Invalid payment signature' });
+      if (razorpay_signature !== expectedSign) {
+        return res.status(400).json({ message: 'Invalid payment signature' });
+      }
     }
 
     // Begin transaction

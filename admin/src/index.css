@@ -121,7 +121,8 @@ table {
   }
 
   /* Grid Layouts */
-  .admin-dashboard-grid {
+  div[style*="grid-template-columns"],
+  form[style*="grid-template-columns"] {
     grid-template-columns: 1fr !important;
   }
 

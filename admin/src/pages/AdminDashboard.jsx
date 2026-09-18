@@ -41,7 +41,7 @@ const AdminDashboard = () => {
           <p style={{ margin: 0, fontSize: '2rem', fontWeight: '700', color: '#333' }}>${parseFloat(stats.totalRevenue).toFixed(2)}</p>
         </div>
         <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#666', fontSize: '0.9rem', textTransform: 'uppercase' }}>Orders</h3>
+          <h3 style={{ margin: '0 0 10px 0', color: '#666', fontSize: '0.9rem', textTransform: 'uppercase' }}>Total Orders</h3>
           <p style={{ margin: 0, fontSize: '2rem', fontWeight: '700', color: '#333' }}>{stats.totalOrders}</p>
         </div>
         <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
@@ -51,10 +51,6 @@ const AdminDashboard = () => {
         <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
           <h3 style={{ margin: '0 0 10px 0', color: '#666', fontSize: '0.9rem', textTransform: 'uppercase' }}>Total Products</h3>
           <p style={{ margin: 0, fontSize: '2rem', fontWeight: '700', color: '#333' }}>{stats.totalProducts}</p>
-        </div>
-        <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
-          <h3 style={{ margin: '0 0 10px 0', color: '#666', fontSize: '0.9rem', textTransform: 'uppercase' }}>Low Stock Products</h3>
-          <p style={{ margin: 0, fontSize: '2rem', fontWeight: '700', color: '#e03a3a' }}>{stats.lowStockProducts}</p>
         </div>
         <div style={{ backgroundColor: '#fff', padding: '20px', borderRadius: '8px', boxShadow: '0 2px 10px rgba(0,0,0,0.02)' }}>
           <h3 style={{ margin: '0 0 10px 0', color: '#666', fontSize: '0.9rem', textTransform: 'uppercase' }}>Customers</h3>

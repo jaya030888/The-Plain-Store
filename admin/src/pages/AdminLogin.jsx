@@ -53,6 +53,12 @@ const AdminLogin = () => {
             Login to Dashboard
           </button>
         </form>
+        
+        <div style={{ marginTop: '20px', textAlign: 'center', fontSize: '0.85rem', color: '#666', fontFamily: 'Inter, sans-serif' }}>
+          <p style={{ margin: '0 0 5px 0' }}><strong>Test Credentials</strong></p>
+          <p style={{ margin: 0 }}>Email: admin@geobucket.com</p>
+          <p style={{ margin: 0 }}>Password: admin123</p>
+        </div>
       </div>
     </div>
   );

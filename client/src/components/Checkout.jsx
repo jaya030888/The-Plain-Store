@@ -110,7 +110,7 @@ const Checkout = () => {
       if (!orderRes.ok) throw new Error(orderData.message);
 
       const options = {
-        key: process.env.REACT_APP_RAZORPAY_KEY_ID || 'rzp_test_mocked_id',
+        key: import.meta.env?.VITE_RAZORPAY_KEY_ID || 'rzp_test_mocked_id',
         amount: orderData.amount,
         currency: orderData.currency,
         name: 'The Plain Store',
@@ -159,8 +159,15 @@ const Checkout = () => {
         }
       };
 
-      const paymentObject = new window.Razorpay(options);
-      paymentObject.open();
+      // Bypass Razorpay entirely as requested
+      setTimeout(() => {
+        options.handler({
+          razorpay_order_id: orderData.id,
+          razorpay_payment_id: `pay_mock_${Date.now()}`,
+          razorpay_signature: 'mock_signature'
+        });
+      }, 1000);
+      return;
     } catch (error) {
       console.error(error);
       alert('Error initiating checkout.');
