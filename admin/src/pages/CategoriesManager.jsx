@@ -17,7 +17,7 @@ const CategoriesManager = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/categories');
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/categories`);
       if (res.ok) setCategories(await res.json());
     } catch (error) {
       console.error(error);
@@ -40,7 +40,7 @@ const CategoriesManager = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const url = editingId ? `http://localhost:5000/api/categories/${editingId}` : 'http://localhost:5000/api/categories';
+      const url = editingId ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/categories/${editingId}` : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/categories`;
       const method = editingId ? 'PUT' : 'POST';
       const res = await fetch(url, {
         method,
@@ -62,7 +62,7 @@ const CategoriesManager = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this category?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/categories/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/categories/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${adminToken}` }
       });

@@ -21,7 +21,7 @@ export const CartProvider = ({ children }) => {
 
   const fetchCart = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/cart', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/cart`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -36,7 +36,7 @@ export const CartProvider = ({ children }) => {
   const addToCart = async (product, qty = 1) => {
     if (!token) return;
     try {
-      const res = await fetch('http://localhost:5000/api/cart/add', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/cart/add`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -58,7 +58,7 @@ export const CartProvider = ({ children }) => {
   const removeFromCart = async (productId) => {
     if (!token) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/cart/remove/${productId}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/cart/remove/${productId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
@@ -73,7 +73,7 @@ export const CartProvider = ({ children }) => {
   const updateQuantity = async (productId, quantity) => {
     if (!token) return;
     try {
-      const res = await fetch('http://localhost:5000/api/cart/update', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/cart/update`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',
@@ -95,7 +95,7 @@ export const CartProvider = ({ children }) => {
   const clearCart = async () => {
     if (!token) return;
     try {
-      const res = await fetch('http://localhost:5000/api/cart/clear', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/cart/clear`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

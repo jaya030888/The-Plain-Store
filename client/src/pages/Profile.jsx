@@ -23,7 +23,7 @@ const Profile = () => {
     e.preventDefault();
     setProfileError('');
     try {
-      const res = await fetch('http://localhost:5000/api/auth/profile', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -49,7 +49,7 @@ const Profile = () => {
 
   const fetchAddresses = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/addresses', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/addresses`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -74,7 +74,7 @@ const Profile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch('http://localhost:5000/api/addresses', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/addresses`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -94,7 +94,7 @@ const Profile = () => {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/addresses/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/addresses/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

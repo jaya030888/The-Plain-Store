@@ -19,7 +19,7 @@ const CouponsManager = () => {
 
   const fetchCoupons = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/coupons', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/coupons`, {
         headers: { Authorization: `Bearer ${adminToken}` }
       });
       if (res.ok) setCoupons(await res.json());
@@ -51,7 +51,7 @@ const CouponsManager = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const url = editingId ? `http://localhost:5000/api/coupons/${editingId}` : 'http://localhost:5000/api/coupons';
+      const url = editingId ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/coupons/${editingId}` : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/coupons`;
       const method = editingId ? 'PUT' : 'POST';
       const res = await fetch(url, {
         method,
@@ -73,7 +73,7 @@ const CouponsManager = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Delete this coupon?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/coupons/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/coupons/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${adminToken}` }
       });

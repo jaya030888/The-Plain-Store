@@ -36,7 +36,7 @@ const Checkout = () => {
 
   const fetchAddresses = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/addresses', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/addresses`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -55,7 +55,7 @@ const Checkout = () => {
     setCouponError('');
     if (!couponCode) return;
     try {
-      const res = await fetch('http://localhost:5000/api/coupons/validate', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/coupons/validate`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -96,7 +96,7 @@ const Checkout = () => {
 
     try {
       // Create Razorpay Order via Backend
-      const orderRes = await fetch('http://localhost:5000/api/orders/create-razorpay-order', {
+      const orderRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders/create-razorpay-order`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -119,7 +119,7 @@ const Checkout = () => {
         handler: async function (response) {
           try {
             // Verify payment
-            const verifyRes = await fetch('http://localhost:5000/api/orders/verify-payment', {
+            const verifyRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders/verify-payment`, {
               method: 'POST',
               headers: { 
                 'Content-Type': 'application/json',

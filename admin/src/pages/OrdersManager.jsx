@@ -18,7 +18,7 @@ const OrdersManager = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/orders/admin', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders/admin`, {
         headers: { Authorization: `Bearer ${adminToken}` }
       });
       if (res.ok) {
@@ -34,7 +34,7 @@ const OrdersManager = () => {
 
   const fetchOrderDetails = async (id) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/admin/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders/admin/${id}`, {
         headers: { Authorization: `Bearer ${adminToken}` }
       });
       if (res.ok) {
@@ -47,7 +47,7 @@ const OrdersManager = () => {
 
   const updateOrderStatus = async (id, status) => {
     try {
-      const res = await fetch(`http://localhost:5000/api/orders/admin/${id}/status`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders/admin/${id}/status`, {
         method: 'PUT',
         headers: { 
           'Content-Type': 'application/json',

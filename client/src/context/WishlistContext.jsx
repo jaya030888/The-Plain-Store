@@ -19,7 +19,7 @@ export const WishlistProvider = ({ children }) => {
 
   const fetchWishlist = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/wishlist', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wishlist`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -43,7 +43,7 @@ export const WishlistProvider = ({ children }) => {
     }
 
     try {
-      const res = await fetch('http://localhost:5000/api/wishlist/toggle', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wishlist/toggle`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -65,7 +65,7 @@ export const WishlistProvider = ({ children }) => {
     // We can just use toggleWishlist since it toggles it off
     if (!token) return;
     try {
-      const res = await fetch('http://localhost:5000/api/wishlist/toggle', {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wishlist/toggle`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',

@@ -23,7 +23,7 @@ const ProductsManager = () => {
 
   const fetchProducts = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/products');
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/products`);
       if (res.ok) {
         const data = await res.json();
         setProducts(data);
@@ -37,7 +37,7 @@ const ProductsManager = () => {
 
   const fetchCategories = async () => {
     try {
-      const res = await fetch('http://localhost:5000/api/categories');
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/categories`);
       if (res.ok) setCategories(await res.json());
     } catch (error) {
       console.error(error);
@@ -72,7 +72,7 @@ const ProductsManager = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const url = editingId ? `http://localhost:5000/api/products/${editingId}` : 'http://localhost:5000/api/products';
+      const url = editingId ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/products/${editingId}` : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/products`;
       const method = editingId ? 'PUT' : 'POST';
       const payload = {
         ...formData,
@@ -99,7 +99,7 @@ const ProductsManager = () => {
   const handleDelete = async (id) => {
     if (!window.confirm('Are you sure you want to delete this product?')) return;
     try {
-      const res = await fetch(`http://localhost:5000/api/products/${id}`, {
+      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/products/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${adminToken}` }
       });
