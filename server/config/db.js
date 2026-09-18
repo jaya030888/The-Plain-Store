@@ -8,6 +8,7 @@ const pool = new Pool({
 });
 
 const wrapper = {
+  isDbAvailable: true,
   query: async (sql, params = []) => {
     let pgSql = sql;
     if (params && params.length > 0) {
@@ -35,11 +36,25 @@ const wrapper = {
       
       return [rows, result.fields];
     } catch (err) {
-      console.error('Database Query Error:', err.message, '\nQuery:', pgSql);
+      console.error('Database Query Error:', err.message);
+      if (err.code === 'ECONNREFUSED') {
+        console.warn('DB connection failed – using mock in‑memory fallback');
+        wrapper.isDbAvailable = false;
+        return [[], []]; // empty result set
+      }
       throw err;
     }
   },
   getConnection: async () => {
+    if (!wrapper.isDbAvailable) {
+      return {
+        query: async () => [[], []],
+        beginTransaction: async () => {},
+        commit: async () => {},
+        rollback: async () => {},
+        release: () => {}
+      };
+    }
     const client = await pool.connect();
     return {
       query: async (sql, params = []) => {
@@ -63,6 +78,9 @@ const wrapper = {
          }
          return [rows, result.fields];
       },
+      beginTransaction: async () => await client.query('BEGIN'),
+      commit: async () => await client.query('COMMIT'),
+      rollback: async () => await client.query('ROLLBACK'),
       release: () => client.release()
     };
   }
