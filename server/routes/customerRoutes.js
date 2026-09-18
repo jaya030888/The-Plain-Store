@@ -12,7 +12,7 @@ router.get('/admin', protect, adminOnly, async (req, res) => {
       FROM users u
       LEFT JOIN orders o ON u.id = o.user_id
       WHERE u.role = 'customer'
-      GROUP BY u.id
+      GROUP BY u.id, u.name, u.email, u.created_at
       ORDER BY u.created_at DESC
     `);
     res.json(rows);

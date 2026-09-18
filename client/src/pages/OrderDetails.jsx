@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft } from 'lucide-react';
+import { API_URL } from '../utils/api';
 
 const OrderDetails = () => {
   const { id } = useParams();
@@ -15,7 +16,7 @@ const OrderDetails = () => {
 
   const fetchOrderDetails = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders/my-orders/${id}`, {
+      const res = await fetch(`${API_URL}/api/orders/my-orders/${id}`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {

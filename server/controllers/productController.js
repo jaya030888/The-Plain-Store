@@ -15,7 +15,7 @@ exports.getAllProducts = async (req, res) => {
     const queryParams = [];
 
     if (search) {
-      baseQuery += ' AND p.name LIKE ?';
+      baseQuery += ' AND p.name ILIKE ?';
       queryParams.push(`%${search}%`);
     }
     if (category) {
@@ -55,7 +55,8 @@ exports.getAllProducts = async (req, res) => {
       categorySlug: row.category_slug,
       stock: row.stock,
       rating: row.rating,
-      reviewCount: row.review_count
+      reviewCount: row.review_count,
+      isFeatured: row.is_featured
     }));
 
     res.json(products);
@@ -95,7 +96,8 @@ exports.getProductById = async (req, res) => {
       categorySlug: row.category_slug,
       stock: row.stock,
       rating: row.rating,
-      reviewCount: row.review_count
+      reviewCount: row.review_count,
+      isFeatured: row.is_featured
     };
 
     res.json(product);
@@ -143,12 +145,19 @@ exports.getFeaturedProducts = async (req, res) => {
 
 exports.createProduct = async (req, res) => {
   try {
-    const { name, slug, description, price, discount_price, category_id, stock, is_featured } = req.body;
+    const { name, slug, description, price, discount_price, category_id, stock, is_featured, image_url } = req.body;
     
     const [result] = await db.query(
       'INSERT INTO products (name, slug, description, price, discount_price, category_id, stock, is_featured) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [name, slug, description, price, discount_price, category_id, stock, is_featured || false]
     );
+
+    if (image_url) {
+      await db.query(
+        'INSERT INTO product_images (product_id, image_url, is_primary) VALUES (?, ?, TRUE)',
+        [result.insertId, image_url]
+      );
+    }
 
     res.status(201).json({ id: result.insertId, message: 'Product created successfully' });
   } catch (error) {

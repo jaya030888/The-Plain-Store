@@ -40,11 +40,7 @@ function App() {
                       <Profile />
                     </ProtectedRoute>
                   } />
-                  <Route path="/wishlist" element={
-                    <ProtectedRoute>
-                      <Wishlist />
-                    </ProtectedRoute>
-                  } />
+                  <Route path="/wishlist" element={<Wishlist />} />
                   <Route path="/orders" element={
                     <ProtectedRoute>
                       <Orders />

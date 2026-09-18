@@ -78,7 +78,7 @@ const Navbar = () => {
 
           <button
             className="cart-icon-container icon-btn"
-            onClick={() => user ? setIsCartOpen(true) : navigate('/login', { state: { from: location } })}
+            onClick={() => setIsCartOpen(true)}
             aria-label={totalItems > 0 ? `Open cart, ${totalItems} items` : 'Open cart'}
           >
             <ShoppingCart size={24} />
@@ -111,7 +111,8 @@ const Navbar = () => {
                 </>
               ) : (
                 <>
-                  <li style={{ borderTop: '1px solid #eee', paddingTop: '20px', marginTop: '10px' }}><Link to="/login" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none', color: 'var(--color-text)' }}>Login</Link></li>
+                  <li style={{ borderTop: '1px solid #eee', paddingTop: '20px', marginTop: '10px' }}><Link to="/wishlist" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none', color: 'var(--color-text)' }}>Wishlist</Link></li>
+                  <li><Link to="/login" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none', color: 'var(--color-text)' }}>Login</Link></li>
                 </>
               )}
             </ul>

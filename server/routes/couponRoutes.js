@@ -4,7 +4,7 @@ const couponController = require('../controllers/couponController');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 
 // Public/Customer
-router.post('/validate', protect, couponController.validateCoupon);
+router.post('/validate', couponController.validateCoupon);
 
 // Admin
 router.get('/', protect, adminOnly, couponController.getAllCoupons);

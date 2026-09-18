@@ -1,9 +1,24 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import { useAuth } from './AuthContext';
+import { API_URL } from '../utils/api';
 
 const WishlistContext = createContext();
+const LOCAL_WISHLIST_KEY = 'plainstore_wishlist';
 
 export const useWishlist = () => useContext(WishlistContext);
+
+const readLocalWishlist = () => {
+  try {
+    const stored = localStorage.getItem(LOCAL_WISHLIST_KEY);
+    return stored ? JSON.parse(stored) : [];
+  } catch {
+    return [];
+  }
+};
+
+const writeLocalWishlist = (items) => {
+  localStorage.setItem(LOCAL_WISHLIST_KEY, JSON.stringify(items));
+};
 
 export const WishlistProvider = ({ children }) => {
   const [wishlistItems, setWishlistItems] = useState([]);
@@ -11,48 +26,90 @@ export const WishlistProvider = ({ children }) => {
 
   useEffect(() => {
     if (user && token) {
-      fetchWishlist();
+      mergeLocalWishlistThenFetch();
     } else {
-      setWishlistItems([]);
+      setWishlistItems(readLocalWishlist());
     }
   }, [user, token]);
 
   const fetchWishlist = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wishlist`, {
+      const res = await fetch(`${API_URL}/api/wishlist`, {
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (res.ok) {
-        const data = await res.json();
-        setWishlistItems(data);
+      if (!res.ok) {
+        throw new Error('Failed to fetch wishlist');
       }
+      const data = await res.json();
+      setWishlistItems(data);
     } catch (error) {
       console.error('Failed to fetch wishlist:', error);
     }
   };
 
+  const mergeLocalWishlistThenFetch = async () => {
+    const localItems = readLocalWishlist();
+    try {
+      const res = await fetch(`${API_URL}/api/wishlist`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (!res.ok) {
+        throw new Error('Failed to fetch wishlist');
+      }
+      const serverItems = await res.json();
+      const serverIds = new Set(serverItems.map((item) => item.id));
+      for (const item of localItems) {
+        if (!serverIds.has(item.id)) {
+          await fetch(`${API_URL}/api/wishlist/toggle`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${token}`
+            },
+            body: JSON.stringify({ productId: item.id })
+          });
+        }
+      }
+      if (localItems.length > 0) {
+        localStorage.removeItem(LOCAL_WISHLIST_KEY);
+      }
+      await fetchWishlist();
+    } catch (error) {
+      console.error('Failed to merge wishlist:', error);
+      await fetchWishlist();
+    }
+  };
+
   const toggleWishlist = async (product) => {
-    if (!token) return;
-    
-    // Optimistic update
-    const exists = wishlistItems.find(item => item.id === product.id);
+    if (!token) {
+      setWishlistItems((prev) => {
+        const exists = prev.find((item) => item.id === product.id);
+        const next = exists
+          ? prev.filter((item) => item.id !== product.id)
+          : [...prev, product];
+        writeLocalWishlist(next);
+        return next;
+      });
+      return;
+    }
+
+    const exists = wishlistItems.find((item) => item.id === product.id);
     if (exists) {
-      setWishlistItems(prev => prev.filter(item => item.id !== product.id));
+      setWishlistItems((prev) => prev.filter((item) => item.id !== product.id));
     } else {
-      setWishlistItems(prev => [...prev, product]);
+      setWishlistItems((prev) => [...prev, product]);
     }
 
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wishlist/toggle`, {
+      const res = await fetch(`${API_URL}/api/wishlist/toggle`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
+          Authorization: `Bearer ${token}`
         },
         body: JSON.stringify({ productId: product.id })
       });
       if (!res.ok) {
-        // Revert on failure
         fetchWishlist();
       }
     } catch (error) {
@@ -62,27 +119,14 @@ export const WishlistProvider = ({ children }) => {
   };
 
   const removeFromWishlist = async (productId) => {
-    // We can just use toggleWishlist since it toggles it off
-    if (!token) return;
-    try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/wishlist/toggle`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify({ productId })
-      });
-      if (res.ok) {
-        fetchWishlist();
-      }
-    } catch (error) {
-      console.error('Error removing from wishlist:', error);
+    const product = wishlistItems.find((item) => item.id === productId);
+    if (product) {
+      await toggleWishlist(product);
     }
   };
 
   const isInWishlist = (productId) => {
-    return wishlistItems.some(item => item.id === productId);
+    return wishlistItems.some((item) => item.id === productId);
   };
 
   return (

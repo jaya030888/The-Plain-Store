@@ -1,37 +1,48 @@
 const jwt = require('jsonwebtoken');
 const pool = require('../config/db');
 
+const jwtSecret = () => process.env.JWT_SECRET || 'dev-only-secret';
+
+const attachUserFromToken = async (token) => {
+  const decoded = jwt.verify(token, jwtSecret());
+  const [users] = await pool.query('SELECT id, name, email, role FROM users WHERE id = ?', [decoded.id]);
+  return users[0] || null;
+};
+
 const protect = async (req, res, next) => {
-  // Development shortcut: bypass JWT verification when SKIP_AUTH is true
-  if (process.env.SKIP_AUTH === 'true') {
-    // Mock a user object – you can adjust as needed (admin role for full access)
+  if (process.env.SKIP_AUTH === 'true' && process.env.NODE_ENV !== 'production') {
     req.user = { id: 1, role: 'admin', name: 'Dev User', email: 'dev@example.com' };
     return next();
   }
 
-  let token;
   if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
     try {
-      token = req.headers.authorization.split(' ')[1];
-      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'secret123');
-
-      const [users] = await pool.query('SELECT id, name, email, role FROM users WHERE id = ?', [decoded.id]);
-      
-      if (users.length === 0) {
+      const token = req.headers.authorization.split(' ')[1];
+      const user = await attachUserFromToken(token);
+      if (!user) {
         return res.status(401).json({ message: 'Not authorized, user not found' });
       }
-
-      req.user = users[0];
-      next();
+      req.user = user;
+      return next();
     } catch (error) {
-      console.error(error);
-      res.status(401).json({ message: 'Not authorized, token failed' });
+      return res.status(401).json({ message: 'Not authorized, token failed' });
     }
   }
 
-  if (!token) {
-    res.status(401).json({ message: 'Not authorized, no token' });
+  return res.status(401).json({ message: 'Not authorized, no token' });
+};
+
+const optionalAuth = async (req, res, next) => {
+  if (req.headers.authorization && req.headers.authorization.startsWith('Bearer')) {
+    try {
+      const token = req.headers.authorization.split(' ')[1];
+      const user = await attachUserFromToken(token);
+      if (user) req.user = user;
+    } catch (error) {
+      // Guest checkout continues without a user
+    }
   }
+  return next();
 };
 
 const adminOnly = (req, res, next) => {
@@ -42,4 +53,4 @@ const adminOnly = (req, res, next) => {
   }
 };
 
-module.exports = { protect, adminOnly };
+module.exports = { protect, adminOnly, optionalAuth };

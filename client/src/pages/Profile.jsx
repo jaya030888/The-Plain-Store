@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../utils/api';
 
 const Profile = () => {
   const { user, token, updateUser } = useAuth();
@@ -23,7 +24,7 @@ const Profile = () => {
     e.preventDefault();
     setProfileError('');
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/auth/profile`, {
+      const res = await fetch(`${API_URL}/api/auth/profile`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',
@@ -49,7 +50,7 @@ const Profile = () => {
 
   const fetchAddresses = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/addresses`, {
+      const res = await fetch(`${API_URL}/api/addresses`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
@@ -74,7 +75,7 @@ const Profile = () => {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/addresses`, {
+      const res = await fetch(`${API_URL}/api/addresses`, {
         method: 'POST',
         headers: { 
           'Content-Type': 'application/json',
@@ -94,7 +95,7 @@ const Profile = () => {
 
   const handleDelete = async (id) => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/addresses/${id}`, {
+      const res = await fetch(`${API_URL}/api/addresses/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });

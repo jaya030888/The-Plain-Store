@@ -1,11 +1,13 @@
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const db = require('./config/db');
+const { runMigrations } = require('./migrate_pg');
 
 const app = express();
 
-// Middleware
 const allowedOrigins = [
+  process.env.FRONTEND_URL,
   process.env.CLIENT_URL,
   process.env.ADMIN_URL,
   'http://localhost:5173',
@@ -14,31 +16,23 @@ const allowedOrigins = [
 
 app.use(cors({
   origin: function (origin, callback) {
-    // In development allow any origin
     if (process.env.NODE_ENV !== 'production') {
       return callback(null, true);
     }
-    // Allow requests with no origin (like mobile apps or curl)
     if (!origin) {
       return callback(null, true);
     }
-    // Allow whitelisted origins and any subdomain of vercel.app (frontend)
     const isAllowed = allowedOrigins.includes(origin) || origin.endsWith('.vercel.app');
     if (isAllowed) {
       return callback(null, true);
-    } else {
-      console.warn(`CORS rejected origin: ${origin}`);
-      return callback(new Error('Not allowed by CORS'));
     }
+    console.warn(`CORS rejected origin: ${origin}`);
+    return callback(new Error('Not allowed by CORS'));
   },
   credentials: true
 }));
 app.use(express.json());
 
-// Run database migrations automatically (idempotent). This will create tables if they do not exist.
-require('./migrate_pg');
-
-// Routes
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');
 const wishlistRoutes = require('./routes/wishlistRoutes');
@@ -61,13 +55,40 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
 
-// Basic Health Route
-app.get('/api/health', (req, res) => {
-  res.json({ status: 'ok', message: 'E-commerce API is running!' });
+app.get('/', (req, res) => {
+  res.json({ status: 'ok', message: 'The Plain Store API' });
 });
 
-// Start Server
+app.get('/api/health', async (req, res) => {
+  try {
+    await db.ping();
+    res.json({ status: 'ok', message: 'E-commerce API is running!', database: 'connected' });
+  } catch (error) {
+    res.status(500).json({ status: 'error', message: 'Database unavailable', database: 'disconnected' });
+  }
+});
+
 const PORT = process.env.PORT || 5000;
-app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+
+async function start() {
+  try {
+    await runMigrations();
+    await db.ping();
+    console.log('Successfully connected to PostgreSQL database.');
+  } catch (error) {
+    console.error('Database startup error:', error.message);
+    if (process.env.NODE_ENV === 'production') {
+      process.exit(1);
+    }
+    throw error;
+  }
+
+  app.listen(PORT, () => {
+    console.log(`Server running on port ${PORT}`);
+  });
+}
+
+start().catch((error) => {
+  console.error('Failed to start server:', error.message);
+  process.exit(1);
 });

@@ -3,15 +3,14 @@ import { useParams, useNavigate } from 'react-router-dom';
 import { ArrowLeft, ShoppingBag, Heart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { useAuth } from '../context/AuthContext';
 import { replaceWithFallbackImage } from '../utils/productImage';
+import { API_URL } from '../utils/api';
 
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { addToCart, setIsCartOpen } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
-  const { user } = useAuth();
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -20,7 +19,7 @@ const ProductDetails = () => {
     window.scrollTo(0, 0);
     const fetchProduct = async () => {
       try {
-        const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/products/${id}`);
+        const res = await fetch(`${API_URL}/api/products/${id}`);
         if (res.ok) {
           const data = await res.json();
           setProduct(data);
@@ -52,19 +51,11 @@ const ProductDetails = () => {
   }
 
   const handleAddToCart = () => {
-    if (!user) {
-      navigate('/login', { state: { from: { pathname: `/product/${id}` } } });
-      return;
-    }
     addToCart(product);
     setIsCartOpen(true);
   };
 
   const handleToggleWishlist = () => {
-    if (!user) {
-      navigate('/login', { state: { from: { pathname: `/product/${id}` } } });
-      return;
-    }
     toggleWishlist(product);
   };
 

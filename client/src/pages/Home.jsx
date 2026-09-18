@@ -2,8 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import HeroProductSlider from '../components/HeroProductSlider';
 import ProductList from '../components/ProductList';
-
-const API_URL = import.meta.env.VITE_API_URL || `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}`;
+import { API_URL } from '../utils/api';
 const asProductArray = (payload) => Array.isArray(payload) ? payload : payload?.products || [];
 
 const Home = () => {

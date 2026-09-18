@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { useAuth } from '../context/AuthContext';
 import { Plus, Edit, Trash2, X } from 'lucide-react';
+import { API_URL } from '../utils/api';
 
 const CouponsManager = () => {
   const [coupons, setCoupons] = useState([]);

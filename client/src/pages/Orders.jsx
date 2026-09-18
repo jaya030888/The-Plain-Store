@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { API_URL } from '../utils/api';
 
 const Orders = () => {
   const { token } = useAuth();
@@ -13,7 +14,7 @@ const Orders = () => {
 
   const fetchOrders = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders/my-orders`, {
+      const res = await fetch(`${API_URL}/api/orders/my-orders`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {

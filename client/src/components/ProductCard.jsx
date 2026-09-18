@@ -2,7 +2,6 @@ import React, { useEffect, useRef } from 'react';
 import { ShoppingBag, Heart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { useAuth } from '../context/AuthContext';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 
@@ -14,7 +13,6 @@ gsap.registerPlugin(ScrollTrigger);
 const ProductCard = ({ product }) => {
   const { addToCart, setIsCartOpen } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
-  const { user } = useAuth();
   const cardRef = useRef(null);
   const imageRef = useRef(null);
   const navigate = useNavigate();
@@ -40,21 +38,13 @@ const ProductCard = ({ product }) => {
   }, []);
 
   const handleAddToCart = (e) => {
-    e.stopPropagation(); // Prevent navigating to details page
-    if (!user) {
-      navigate('/login', { state: { from: { pathname: '/' } } });
-      return;
-    }
+    e.stopPropagation();
     addToCart(product);
     setIsCartOpen(true);
   };
 
   const handleToggleWishlist = (e) => {
     e.stopPropagation();
-    if (!user) {
-      navigate('/login');
-      return;
-    }
     toggleWishlist(product);
   };
 

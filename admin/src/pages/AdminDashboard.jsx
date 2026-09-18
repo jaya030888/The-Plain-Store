@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { useAuth } from '../context/AuthContext';
+import { API_URL } from '../utils/api';
 
 const AdminDashboard = () => {
   const { adminToken } = useAuth();
@@ -20,7 +21,7 @@ const AdminDashboard = () => {
 
   const fetchStats = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/admin/dashboard`, {
+      const res = await fetch(`${API_URL}/api/admin/dashboard`, {
         headers: { Authorization: `Bearer ${adminToken}` }
       });
       if (res.ok) setStats(await res.json());

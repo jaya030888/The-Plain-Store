@@ -1,6 +1,4 @@
 const db = require('../config/db');
-// Razorpay integration disabled for now – placeholder stub
-const razorpay = null;
 
 exports.createRazorpayOrder = async (req, res) => {
   res.status(501).json({ message: 'Razorpay integration not available in this build' });
@@ -8,6 +6,135 @@ exports.createRazorpayOrder = async (req, res) => {
 
 exports.verifyPaymentAndCreateOrder = async (req, res) => {
   res.status(501).json({ message: 'Razorpay integration not available in this build' });
+};
+
+exports.createOrder = async (req, res) => {
+  const userId = req.user?.id || null;
+  const { addressId, address, couponId, items } = req.body;
+
+  if (!Array.isArray(items) || items.length === 0) {
+    return res.status(400).json({ message: 'Order items are required' });
+  }
+
+  const conn = await db.getConnection();
+  try {
+    await conn.beginTransaction();
+
+    let finalAddressId = addressId || null;
+    if (finalAddressId && userId) {
+      const [owned] = await conn.query(
+        'SELECT id FROM addresses WHERE id = ? AND user_id = ?',
+        [finalAddressId, userId]
+      );
+      if (owned.length === 0) {
+        await conn.rollback();
+        return res.status(400).json({ message: 'Invalid address' });
+      }
+    }
+
+    if (!finalAddressId) {
+      if (!address || !address.full_name || !address.phone || !address.house_flat || !address.street || !address.area || !address.city || !address.state || !address.pincode) {
+        await conn.rollback();
+        return res.status(400).json({ message: 'Shipping address is required' });
+      }
+      const [addrResult] = await conn.query(
+        'INSERT INTO addresses (user_id, full_name, phone, house_flat, street, area, city, state, pincode, is_default) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+        [userId, address.full_name, address.phone, address.house_flat, address.street, address.area, address.city, address.state, address.pincode, false]
+      );
+      finalAddressId = addrResult.insertId;
+    }
+
+    let subtotal = 0;
+    const resolvedItems = [];
+    for (const item of items) {
+      const productId = item.productId || item.id;
+      const qty = Number(item.quantity) || 1;
+      if (!productId || qty <= 0) {
+        await conn.rollback();
+        return res.status(400).json({ message: 'Each item needs a product id and quantity' });
+      }
+
+      const [rows] = await conn.query(
+        'SELECT id, price, discount_price, stock FROM products WHERE id = ?',
+        [productId]
+      );
+      if (rows.length === 0) {
+        await conn.rollback();
+        return res.status(400).json({ message: `Product not found: ${productId}` });
+      }
+
+      const product = rows[0];
+      if (Number(product.stock) < qty) {
+        await conn.rollback();
+        return res.status(400).json({ message: `Insufficient stock for product ${productId}` });
+      }
+
+      const unit = parseFloat(product.discount_price || product.price);
+      subtotal += unit * qty;
+      resolvedItems.push({ productId: product.id, quantity: qty, price: unit });
+    }
+
+    let discountAmount = 0;
+    let validCouponId = null;
+    if (couponId) {
+      const [coupons] = await conn.query(
+        'SELECT * FROM coupons WHERE id = ? AND is_active = TRUE',
+        [couponId]
+      );
+      if (coupons.length === 0) {
+        await conn.rollback();
+        return res.status(400).json({ message: 'Invalid coupon' });
+      }
+      const coupon = coupons[0];
+      if (coupon.expiry_date && new Date(coupon.expiry_date) < new Date()) {
+        await conn.rollback();
+        return res.status(400).json({ message: 'Coupon has expired' });
+      }
+      if (subtotal < parseFloat(coupon.min_order_amount || 0)) {
+        await conn.rollback();
+        return res.status(400).json({ message: `Minimum order amount is $${coupon.min_order_amount}` });
+      }
+      discountAmount = coupon.discount_type === 'percentage'
+        ? subtotal * (parseFloat(coupon.discount_value) / 100)
+        : parseFloat(coupon.discount_value);
+      validCouponId = coupon.id;
+    }
+
+    const deliveryFee = 15;
+    const total = Math.max(0, subtotal + deliveryFee - discountAmount);
+
+    const [orderResult] = await conn.query(
+      `INSERT INTO orders (user_id, address_id, subtotal, delivery_fee, total, coupon_id, discount_amount, payment_status, order_status)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [userId, finalAddressId, subtotal, deliveryFee, total, validCouponId, discountAmount, 'pending', 'pending']
+    );
+
+    for (const item of resolvedItems) {
+      await conn.query(
+        'INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)',
+        [orderResult.insertId, item.productId, item.quantity, item.price]
+      );
+      await conn.query('UPDATE products SET stock = stock - ? WHERE id = ?', [item.quantity, item.productId]);
+    }
+
+    if (userId) {
+      await conn.query('DELETE FROM cart_items WHERE user_id = ?', [userId]);
+    }
+
+    await conn.commit();
+    res.status(201).json({
+      id: orderResult.insertId,
+      total,
+      payment_status: 'pending',
+      order_status: 'pending'
+    });
+  } catch (error) {
+    await conn.rollback();
+    console.error('Error creating order:', error);
+    res.status(500).json({ message: 'Server error creating order' });
+  } finally {
+    conn.release();
+  }
 };
 
 exports.getMyOrders = async (req, res) => {

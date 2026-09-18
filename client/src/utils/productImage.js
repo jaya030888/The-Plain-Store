@@ -1,7 +1,7 @@
 const fallbackImages = [
-  '/wooden_jewellery_box.jpg',
-  '/minimalist_desk_organizer.jpg',
-  '/ceramic_vase_set.jpg',
+  'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80',
+  'https://images.unsplash.com/photo-1594042898950-c8e4a7c06eb1?w=800&q=80',
+  'https://images.unsplash.com/photo-1613564998797-15d97f80f1d0?w=800&q=80',
 ];
 
 export const fallbackProductImage = (productId) => {
@@ -12,6 +12,6 @@ export const fallbackProductImage = (productId) => {
 export const replaceWithFallbackImage = (event, productId) => {
   const image = event.currentTarget;
   const fallback = fallbackProductImage(productId);
-  if (image.src.endsWith(fallback)) return;
+  if (image.src === fallback) return;
   image.src = fallback;
 };

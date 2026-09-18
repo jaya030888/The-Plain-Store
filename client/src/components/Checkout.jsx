@@ -1,33 +1,29 @@
 import React, { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
-import { X, CheckCircle, MapPin, Tag } from 'lucide-react';
+import { X, CheckCircle } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
-
-const loadRazorpayScript = () => {
-  return new Promise((resolve) => {
-    const script = document.createElement('script');
-    script.src = 'https://checkout.razorpay.com/v1/checkout.js';
-    script.onload = () => resolve(true);
-    script.onerror = () => resolve(false);
-    document.body.appendChild(script);
-  });
-};
+import { API_URL } from '../utils/api';
 
 const Checkout = () => {
   const { cartItems, isCheckoutOpen, setIsCheckoutOpen, cartTotal, clearCart } = useCart();
   const { token, user } = useAuth();
   const navigate = useNavigate();
 
-  const [step, setStep] = useState(1); // 1: Address, 2: Summary/Payment, 3: Success
+  const [step, setStep] = useState(1);
   const [addresses, setAddresses] = useState([]);
   const [selectedAddressId, setSelectedAddressId] = useState(null);
+  const [guestAddress, setGuestAddress] = useState({
+    full_name: '', phone: '', house_flat: '', street: '', area: '', city: '', state: '', pincode: ''
+  });
   const [couponCode, setCouponCode] = useState('');
   const [appliedCoupon, setAppliedCoupon] = useState(null);
   const [couponError, setCouponError] = useState('');
-  
+  const [placingOrder, setPlacingOrder] = useState(false);
+  const [createdOrderId, setCreatedOrderId] = useState(null);
+
   const deliveryFee = 15.00;
-  
+
   useEffect(() => {
     if (isCheckoutOpen && token) {
       fetchAddresses();
@@ -36,13 +32,13 @@ const Checkout = () => {
 
   const fetchAddresses = async () => {
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/addresses`, {
+      const res = await fetch(`${API_URL}/api/addresses`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
         setAddresses(data);
-        const defaultAddr = data.find(a => a.is_default);
+        const defaultAddr = data.find((a) => a.is_default);
         if (defaultAddr) setSelectedAddressId(defaultAddr.id);
         else if (data.length > 0) setSelectedAddressId(data[0].id);
       }
@@ -55,11 +51,11 @@ const Checkout = () => {
     setCouponError('');
     if (!couponCode) return;
     try {
-      const res = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/coupons/validate`, {
+      const res = await fetch(`${API_URL}/api/coupons/validate`, {
         method: 'POST',
-        headers: { 
+        headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
         },
         body: JSON.stringify({ code: couponCode })
       });
@@ -88,89 +84,49 @@ const Checkout = () => {
 
   const finalTotal = cartTotal + deliveryFee - getDiscountAmount();
 
-  const handlePayment = async () => {
-    if (!selectedAddressId) return alert('Please select an address');
+  const guestAddressComplete = Object.values(guestAddress).every((value) => String(value).trim());
 
-    const res = await loadRazorpayScript();
-    if (!res) return alert('Razorpay SDK failed to load. Are you online?');
-
-    try {
-      // Create Razorpay Order via Backend
-      const orderRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders/create-razorpay-order`, {
-        method: 'POST',
-        headers: { 
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${token}` 
-        },
-        body: JSON.stringify({ amount: finalTotal })
-      });
-      
-      const orderData = await orderRes.json();
-      
-      if (!orderRes.ok) throw new Error(orderData.message);
-
-      const options = {
-        key: import.meta.env?.VITE_RAZORPAY_KEY_ID || 'rzp_test_mocked_id',
-        amount: orderData.amount,
-        currency: orderData.currency,
-        name: 'The Plain Store',
-        description: 'Store Purchase',
-        order_id: orderData.id,
-        handler: async function (response) {
-          try {
-            // Verify payment
-            const verifyRes = await fetch(`${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/orders/verify-payment`, {
-              method: 'POST',
-              headers: { 
-                'Content-Type': 'application/json',
-                Authorization: `Bearer ${token}` 
-              },
-              body: JSON.stringify({
-                razorpay_order_id: response.razorpay_order_id,
-                razorpay_payment_id: response.razorpay_payment_id,
-                razorpay_signature: response.razorpay_signature,
-                addressId: selectedAddressId,
-                couponId: appliedCoupon ? appliedCoupon.id : null,
-                subtotal: cartTotal,
-                deliveryFee: deliveryFee,
-                discountAmount: getDiscountAmount(),
-                total: finalTotal,
-                items: cartItems
-              })
-            });
-
-            if (verifyRes.ok) {
-              setStep(3); // Success
-              clearCart();
-            } else {
-              alert('Payment verification failed on the server.');
-            }
-          } catch (error) {
-            console.error(error);
-            alert('Error verifying payment.');
-          }
-        },
-        prefill: {
-          name: user?.name,
-          email: user?.email,
-        },
-        theme: {
-          color: '#468165'
-        }
-      };
-
-      // Bypass Razorpay entirely as requested
-      setTimeout(() => {
-        options.handler({
-          razorpay_order_id: orderData.id,
-          razorpay_payment_id: `pay_mock_${Date.now()}`,
-          razorpay_signature: 'mock_signature'
-        });
-      }, 1000);
+  const continueFromAddress = () => {
+    if (token) {
+      if (!selectedAddressId) return alert('Please select an address');
+      setStep(2);
       return;
+    }
+    if (!guestAddressComplete) return alert('Please complete your shipping address');
+    setStep(2);
+  };
+
+  const handlePlaceOrder = async () => {
+    if (token && !selectedAddressId) return alert('Please select an address');
+    if (!token && !guestAddressComplete) return alert('Please complete your shipping address');
+
+    setPlacingOrder(true);
+    try {
+      const res = await fetch(`${API_URL}/api/orders`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {})
+        },
+        body: JSON.stringify({
+          addressId: token ? selectedAddressId : null,
+          address: token ? undefined : guestAddress,
+          couponId: appliedCoupon ? appliedCoupon.id : null,
+          items: cartItems.map((item) => ({ productId: item.id, quantity: item.quantity }))
+        })
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to place order');
+      }
+      setCreatedOrderId(data.id);
+      await clearCart();
+      setStep(3);
     } catch (error) {
       console.error(error);
-      alert('Error initiating checkout.');
+      alert(error.message || 'Error placing order.');
+    } finally {
+      setPlacingOrder(false);
     }
   };
 
@@ -180,6 +136,7 @@ const Checkout = () => {
       setStep(1);
       setAppliedCoupon(null);
       setCouponCode('');
+      setCreatedOrderId(null);
     }, 500);
   };
 
@@ -196,18 +153,18 @@ const Checkout = () => {
         {step === 1 && (
           <div className="checkout-step">
             <h3>Select Shipping Address</h3>
-            {addresses.length === 0 ? (
+            {token && addresses.length === 0 ? (
               <div style={{ padding: '20px', textAlign: 'center' }}>
                 <p>You have no saved addresses.</p>
                 <button className="btn-primary" onClick={() => { closeCheckout(); navigate('/profile'); }}>Add Address in Profile</button>
               </div>
-            ) : (
+            ) : token ? (
               <div className="address-list" style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
                 {addresses.map(addr => (
                   <label key={addr.id} style={{ display: 'flex', alignItems: 'flex-start', gap: '15px', border: '1px solid #ddd', padding: '15px', borderRadius: '8px', cursor: 'pointer', background: selectedAddressId === addr.id ? '#f5f1e7' : '#fff' }}>
-                    <input 
-                      type="radio" 
-                      name="address" 
+                    <input
+                      type="radio"
+                      name="address"
                       checked={selectedAddressId === addr.id}
                       onChange={() => setSelectedAddressId(addr.id)}
                       style={{ marginTop: '5px' }}
@@ -222,15 +179,27 @@ const Checkout = () => {
                     </div>
                   </label>
                 ))}
-                <button 
-                  className="btn-primary" 
+                <button
+                  className="btn-primary"
                   disabled={!selectedAddressId}
-                  onClick={() => setStep(2)}
+                  onClick={continueFromAddress}
                   style={{ marginTop: '15px' }}
                 >
                   Continue to Order Summary
                 </button>
               </div>
+            ) : (
+              <form onSubmit={(e) => { e.preventDefault(); continueFromAddress(); }} style={{ display: 'grid', gap: '12px', marginTop: '15px' }}>
+                <input className="auth-input" placeholder="Full Name" value={guestAddress.full_name} onChange={(e) => setGuestAddress({ ...guestAddress, full_name: e.target.value })} required />
+                <input className="auth-input" placeholder="Phone" value={guestAddress.phone} onChange={(e) => setGuestAddress({ ...guestAddress, phone: e.target.value })} required />
+                <input className="auth-input" placeholder="House / Flat" value={guestAddress.house_flat} onChange={(e) => setGuestAddress({ ...guestAddress, house_flat: e.target.value })} required />
+                <input className="auth-input" placeholder="Street" value={guestAddress.street} onChange={(e) => setGuestAddress({ ...guestAddress, street: e.target.value })} required />
+                <input className="auth-input" placeholder="Area" value={guestAddress.area} onChange={(e) => setGuestAddress({ ...guestAddress, area: e.target.value })} required />
+                <input className="auth-input" placeholder="City" value={guestAddress.city} onChange={(e) => setGuestAddress({ ...guestAddress, city: e.target.value })} required />
+                <input className="auth-input" placeholder="State" value={guestAddress.state} onChange={(e) => setGuestAddress({ ...guestAddress, state: e.target.value })} required />
+                <input className="auth-input" placeholder="Pincode" value={guestAddress.pincode} onChange={(e) => setGuestAddress({ ...guestAddress, pincode: e.target.value })} required />
+                <button className="btn-primary" type="submit">Continue to Order Summary</button>
+              </form>
             )}
           </div>
         )}
@@ -247,6 +216,17 @@ const Checkout = () => {
               ))}
             </div>
 
+            <div style={{ display: 'flex', gap: '10px', marginBottom: '15px' }}>
+              <input
+                className="auth-input"
+                placeholder="Coupon code"
+                value={couponCode}
+                onChange={(e) => setCouponCode(e.target.value)}
+                style={{ flex: 1 }}
+              />
+              <button className="btn-outline" type="button" onClick={applyCoupon}>Apply</button>
+            </div>
+            {couponError && <p style={{ color: '#e03a3a', marginTop: 0 }}>{couponError}</p>}
 
             <div className="totals" style={{ display: 'flex', flexDirection: 'column', gap: '10px', fontSize: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
@@ -271,7 +251,9 @@ const Checkout = () => {
 
             <div style={{ display: 'flex', gap: '15px', marginTop: '25px' }}>
               <button className="btn-outline" onClick={() => setStep(1)} style={{ flex: 1 }}>Back</button>
-              <button className="btn-primary" onClick={handlePayment} style={{ flex: 2 }}>Pay Now</button>
+              <button className="btn-primary" onClick={handlePlaceOrder} disabled={placingOrder} style={{ flex: 2 }}>
+                {placingOrder ? 'Placing Order...' : 'Place Order'}
+              </button>
             </div>
           </div>
         )}
@@ -279,9 +261,13 @@ const Checkout = () => {
         {step === 3 && (
           <div className="success-state" style={{ textAlign: 'center', padding: '40px 20px' }}>
             <CheckCircle size={64} color="#468165" style={{ margin: '0 auto 20px' }} />
-            <h3 style={{ marginBottom: '10px' }}>Payment Successful!</h3>
-            <p style={{ color: '#666', marginBottom: '30px' }}>Your order has been confirmed.</p>
-            <button className="btn-primary" onClick={() => { closeCheckout(); navigate('/orders'); }}>View My Orders</button>
+            <h3 style={{ marginBottom: '10px' }}>Order Placed</h3>
+            <p style={{ color: '#666', marginBottom: '30px' }}>
+              {createdOrderId ? `Order #${createdOrderId} has been confirmed.` : 'Your order has been confirmed.'}
+            </p>
+            <button className="btn-primary" onClick={() => { closeCheckout(); if (user) navigate('/orders'); }}>
+              {user ? 'View My Orders' : 'Continue Shopping'}
+            </button>
           </div>
         )}
       </div>
