@@ -152,7 +152,14 @@ const HeroProductSlider = ({ products }) => {
               <div className="h-slide-info">
                 <h2 className="h-slide-title h-slide-text">{product.title}</h2>
                 <p className="h-slide-desc h-slide-text">{product.description}</p>
-                <p className="h-slide-price h-slide-text">{product.price}</p>
+                <p className="h-slide-price h-slide-text">
+                  {product.price}
+                  {product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0 && (
+                    <span style={{ fontSize: '0.85rem', color: '#dc2626', fontWeight: 600, marginLeft: '10px' }}>
+                      (Out of Stock)
+                    </span>
+                  )}
+                </p>
                 
                 <div className="h-slide-text">
                   <button 

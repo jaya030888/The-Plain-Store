@@ -32,7 +32,8 @@ const ArticleDetails = () => {
   }
 
   const relatedArticles = ARTICLES_DATA
-    .filter((a) => a.id !== article.id && (a.category === article.category || Math.random() > 0.5))
+    .filter((a) => a.id !== article.id)
+    .sort((a, b) => (b.category === article.category ? 1 : 0) - (a.category === article.category ? 1 : 0))
     .slice(0, 3);
 
   return (

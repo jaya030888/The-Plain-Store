@@ -9,10 +9,6 @@ const Orders = () => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchOrders();
-  }, [token]);
-
   const fetchOrders = async () => {
     try {
       const res = await fetch(`${API_URL}/api/orders/my-orders`, {
@@ -28,6 +24,10 @@ const Orders = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchOrders();
+  }, [token]);
 
   const getStatusColor = (status) => {
     switch(status) {

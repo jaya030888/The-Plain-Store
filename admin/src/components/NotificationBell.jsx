@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Heart, Check, Trash2, X, RefreshCw } from 'lucide-react';
+import { Bell, Heart, Trash2, X, RefreshCw } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const formatTimeAgo = (dateString) => {

@@ -24,12 +24,6 @@ const Checkout = () => {
 
   const deliveryFee = 15.00;
 
-  useEffect(() => {
-    if (isCheckoutOpen && token) {
-      fetchAddresses();
-    }
-  }, [isCheckoutOpen, token]);
-
   const fetchAddresses = async () => {
     try {
       const res = await fetch(`${API_URL}/api/addresses`, {
@@ -46,6 +40,12 @@ const Checkout = () => {
       console.error('Error fetching addresses', error);
     }
   };
+
+  useEffect(() => {
+    if (isCheckoutOpen && token) {
+      fetchAddresses();
+    }
+  }, [isCheckoutOpen, token]);
 
   const applyCoupon = async () => {
     setCouponError('');

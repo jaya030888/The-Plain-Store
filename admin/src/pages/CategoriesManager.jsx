@@ -12,10 +12,6 @@ const CategoriesManager = () => {
   const [formData, setFormData] = useState({ name: '', slug: '' });
   const { adminToken } = useAuth();
 
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
   const fetchCategories = async () => {
     try {
       const res = await fetch(`${API_URL}/api/categories`);
@@ -26,6 +22,10 @@ const CategoriesManager = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchCategories();
+  }, []);
 
   const handleOpenModal = (cat = null) => {
     if (cat) {

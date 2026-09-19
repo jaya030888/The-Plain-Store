@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Edit, Trash2, X, Check, Flame, Tag, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Check, Tag } from 'lucide-react';
 import { replaceWithFallbackImage } from '../utils/productImage';
 
 const ProductsManager = () => {
@@ -24,11 +24,6 @@ const ProductsManager = () => {
   // Quick sale modal/dialog state
   const [saleDialogProduct, setSaleDialogProduct] = useState(null);
   const [saleDiscountInput, setSaleDiscountInput] = useState('');
-
-  useEffect(() => {
-    fetchProducts();
-    fetchCategories();
-  }, []);
 
   const fetchProducts = async () => {
     try {
@@ -58,6 +53,11 @@ const ProductsManager = () => {
       console.error(error);
     }
   };
+
+  useEffect(() => {
+    fetchProducts();
+    fetchCategories();
+  }, []);
 
   const handleOpenModal = (p = null) => {
     if (p) {
@@ -267,8 +267,8 @@ const ProductsManager = () => {
                               </span>
                             )}
                             {product.isOnSale && (
-                              <span style={{ fontSize: '0.7rem', padding: '1px 6px', backgroundColor: '#fee2e2', color: '#dc2626', borderRadius: '4px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
-                                <Flame size={11} /> ON SALE
+                              <span style={{ fontSize: '0.7rem', padding: '1px 6px', backgroundColor: '#F5ECE6', color: '#8F422E', borderRadius: '4px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                                <Tag size={10} /> ON SALE
                               </span>
                             )}
                           </div>
@@ -285,7 +285,7 @@ const ProductsManager = () => {
                     <td style={{ padding: '15px 20px' }}>
                       {product.isOnSale && product.discountPrice ? (
                         <div>
-                          <span style={{ fontWeight: '700', color: '#dc2626' }}>{product.discountPrice}</span>
+                          <span style={{ fontWeight: '700', color: '#8F422E' }}>{product.discountPrice}</span>
                           <span style={{ marginLeft: '6px', fontSize: '0.85rem', color: '#94a3b8', textDecoration: 'line-through' }}>
                             {product.price}
                           </span>
@@ -312,12 +312,12 @@ const ProductsManager = () => {
                           border: 'none',
                           cursor: 'pointer',
                           transition: 'all 0.2s ease',
-                          backgroundColor: product.isOnSale ? '#fef2f2' : '#f1f5f9',
-                          color: product.isOnSale ? '#dc2626' : '#64748b',
-                          boxShadow: product.isOnSale ? '0 0 0 1px #fecaca' : '0 0 0 1px #e2e8f0'
+                          backgroundColor: product.isOnSale ? '#F5ECE6' : '#f1f5f9',
+                          color: product.isOnSale ? '#8F422E' : '#64748b',
+                          boxShadow: product.isOnSale ? '0 0 0 1px #E5D5CB' : '0 0 0 1px #e2e8f0'
                         }}
                       >
-                        <Flame size={14} color={product.isOnSale ? '#dc2626' : '#94a3b8'} />
+                        <Tag size={13} color={product.isOnSale ? '#8F422E' : '#94a3b8'} />
                         {product.isOnSale ? 'On Sale (Click to Stop)' : '+ Put On Sale'}
                       </button>
                     </td>
@@ -386,8 +386,8 @@ const ProductsManager = () => {
                         style={{ 
                           fontSize: '0.8rem', 
                           padding: '4px 10px', 
-                          backgroundColor: product.stock > 0 ? '#e6f3ed' : '#fee2e2', 
-                          color: product.stock > 0 ? '#468165' : '#b91c1c', 
+                          backgroundColor: product.stock > 0 ? '#e6f3ed' : '#F5ECE6', 
+                          color: product.stock > 0 ? '#468165' : '#8F422E', 
                           borderRadius: '20px',
                           fontWeight: '600',
                           display: 'inline-block'
@@ -435,7 +435,7 @@ const ProductsManager = () => {
           >
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '15px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <Flame size={20} color="#dc2626" />
+                <Tag size={18} color="#8F422E" />
                 <h3 style={{ margin: 0, fontSize: '1.2rem', color: '#1e293b' }}>Put Item On Sale</h3>
               </div>
               <button onClick={() => setSaleDialogProduct(null)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>
@@ -478,9 +478,9 @@ const ProductsManager = () => {
               <button
                 type="button"
                 onClick={() => executeQuickSaleUpdate(saleDialogProduct.id, true, saleDiscountInput)}
-                style={{ padding: '9px 18px', backgroundColor: '#dc2626', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}
+                style={{ padding: '9px 18px', backgroundColor: '#8F422E', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}
               >
-                <Flame size={16} /> Enable Sale
+                <Tag size={15} /> Enable Sale
               </button>
             </div>
           </div>
@@ -548,7 +548,7 @@ const ProductsManager = () => {
                     onChange={e => setFormData({ ...formData, is_on_sale: e.target.checked })} 
                   />
                   <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Flame size={16} color="#dc2626" />
+                    <Tag size={15} color="#8F422E" />
                     <strong>Put On Sale</strong> (Highlights product with SALE badge & includes in Sale Banners)
                   </span>
                 </label>

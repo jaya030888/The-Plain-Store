@@ -21,19 +21,11 @@ const writeLocalCart = (items) => {
 };
 
 export const CartProvider = ({ children }) => {
-  const [cartItems, setCartItems] = useState([]);
+  const [cartItems, setCartItems] = useState(readLocalCart);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const { user, token } = useAuth();
   const isMergingRef = useRef(false);
-
-  useEffect(() => {
-    if (user && token) {
-      mergeLocalCartThenFetch();
-    } else {
-      setCartItems(readLocalCart());
-    }
-  }, [user, token]);
 
   const authHeaders = () => ({
     'Content-Type': 'application/json',
@@ -41,6 +33,7 @@ export const CartProvider = ({ children }) => {
   });
 
   const fetchCart = async () => {
+    if (!token) return;
     try {
       const res = await fetch(`${API_URL}/api/cart`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -82,7 +75,20 @@ export const CartProvider = ({ children }) => {
     }
   };
 
+  useEffect(() => {
+    if (user && token) {
+      mergeLocalCartThenFetch();
+    } else {
+      setCartItems(readLocalCart());
+    }
+  }, [user, token]);
+
   const addToCart = async (product, qty = 1) => {
+    if (product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0) {
+      alert('This product is currently out of stock.');
+      return;
+    }
+
     if (!token) {
       const current = readLocalCart();
       const existing = current.find((item) => item.id === product.id);

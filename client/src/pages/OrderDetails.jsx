@@ -37,10 +37,6 @@ const OrderDetails = () => {
   const [loading, setLoading] = useState(true);
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    fetchOrderDetails();
-  }, [id, token]);
-
   const fetchOrderDetails = async () => {
     try {
       const res = await fetch(`${API_URL}/api/orders/my-orders/${id}`, {
@@ -56,6 +52,10 @@ const OrderDetails = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    fetchOrderDetails();
+  }, [id, token]);
 
   const copyTracking = () => {
     if (!order?.tracking_number) return;

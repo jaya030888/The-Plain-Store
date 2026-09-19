@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import { LayoutDashboard, Package, LogOut, ShoppingBag, FolderTree, Tag, Users, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Package, LogOut, ShoppingBag, Users, Menu, X } from 'lucide-react';
 import NotificationBell from './NotificationBell';
 
 const AdminLayout = ({ children, title }) => {

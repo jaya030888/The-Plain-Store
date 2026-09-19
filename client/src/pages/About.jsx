@@ -1,5 +1,5 @@
 import React, { useEffect } from 'react';
-import { Sparkles, Package, ShieldCheck, Heart, ArrowRight } from 'lucide-react';
+import { Package, ShieldCheck, Heart, ArrowRight } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 const About = () => {
@@ -13,9 +13,6 @@ const About = () => {
         
         {/* Hero Section */}
         <div style={{ textAlign: 'center', marginBottom: '50px' }}>
-          <div style={{ display: 'inline-flex', padding: '12px', background: 'rgba(70, 129, 101, 0.1)', borderRadius: '50%', marginBottom: '15px' }}>
-            <Sparkles size={32} color="#468165" />
-          </div>
           <h1 style={{ fontSize: '2.5rem', marginBottom: '12px', color: '#1a1a1a', fontFamily: 'var(--font-main)', fontWeight: '700' }}>
             About The Plain Store
           </h1>

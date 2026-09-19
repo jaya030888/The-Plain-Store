@@ -4,7 +4,6 @@ import HeroProductSlider from '../components/HeroProductSlider';
 import ProductList from '../components/ProductList';
 import SaleBanner from '../components/SaleBanner';
 import { API_URL } from '../utils/api';
-import { Sparkles, Layers, Flame } from 'lucide-react';
 
 const asProductArray = (payload) => Array.isArray(payload) ? payload : payload?.products || [];
 
@@ -138,15 +137,14 @@ const Home = () => {
       >
         
         {/* Category Navigation Bar */}
-        <div style={{ maxWidth: '1200px', margin: '0 auto 30px', padding: '0 20px' }}>
+        <div style={{ marginBottom: '25px' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '15px', flexWrap: 'wrap', gap: '10px' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <Sparkles size={18} color="#468165" />
+            <div>
               <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 600, color: '#222' }}>
                 {searchQuery 
                   ? `Search results for "${searchQuery}"` 
                   : showSaleOnly 
-                  ? '🔥 On-Sale Items' 
+                  ? 'On-Sale Items' 
                   : 'Browse by Category'}
               </h3>
             </div>
@@ -181,17 +179,16 @@ const Home = () => {
                 fontWeight: activeCategory === 'all' && !showSaleOnly ? '600' : '400',
                 background: activeCategory === 'all' && !showSaleOnly ? '#468165' : '#fff',
                 color: activeCategory === 'all' && !showSaleOnly ? '#fff' : '#444',
-                border: `1.5px solid ${activeCategory === 'all' && !showSaleOnly ? '#468165' : '#e2ddd4'}`,
+                border: `1.5px solid ${activeCategory === 'all' && !showSaleOnly ? '#468165' : '#E6DEC9'}`,
                 boxShadow: activeCategory === 'all' && !showSaleOnly ? '0 2px 8px rgba(70, 129, 101, 0.25)' : 'none',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 transition: 'all 0.2s ease',
                 display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px'
+                alignItems: 'center'
               }}
             >
-              <Layers size={15} /> All Products
+              All Products
             </button>
 
             {/* Quick Sale Toggle Pill */}
@@ -201,21 +198,19 @@ const Home = () => {
                 padding: '8px 18px',
                 borderRadius: '30px',
                 fontSize: '14px',
-                fontWeight: showSaleOnly ? '700' : '500',
-                background: showSaleOnly ? '#dc2626' : '#fff',
-                color: showSaleOnly ? '#fff' : '#dc2626',
-                border: `1.5px solid ${showSaleOnly ? '#dc2626' : '#fecaca'}`,
-                boxShadow: showSaleOnly ? '0 2px 8px rgba(220, 38, 38, 0.3)' : 'none',
+                fontWeight: showSaleOnly ? '600' : '500',
+                background: showSaleOnly ? '#8F422E' : '#fff',
+                color: showSaleOnly ? '#fff' : '#8F422E',
+                border: `1.5px solid ${showSaleOnly ? '#8F422E' : '#E5D5CB'}`,
+                boxShadow: showSaleOnly ? '0 2px 8px rgba(143, 66, 46, 0.2)' : 'none',
                 cursor: 'pointer',
                 whiteSpace: 'nowrap',
                 transition: 'all 0.2s ease',
                 display: 'inline-flex',
-                alignItems: 'center',
-                gap: '6px'
+                alignItems: 'center'
               }}
             >
-              <Flame size={15} color={showSaleOnly ? '#fff' : '#dc2626'} />
-              🔥 On Sale
+              On Sale
             </button>
 
             {categories.map((cat) => {
@@ -238,7 +233,7 @@ const Home = () => {
                     fontWeight: isActive ? '600' : '400',
                     background: isActive ? '#468165' : '#fff',
                     color: isActive ? '#fff' : '#444',
-                    border: `1.5px solid ${isActive ? '#468165' : '#e2ddd4'}`,
+                    border: `1.5px solid ${isActive ? '#468165' : '#E6DEC9'}`,
                     boxShadow: isActive ? '0 2px 8px rgba(70, 129, 101, 0.25)' : 'none',
                     cursor: 'pointer',
                     whiteSpace: 'nowrap',

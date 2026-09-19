@@ -65,7 +65,7 @@ const ProductDetails = () => {
     ? product.images
     : (product.image ? [product.image] : []);
 
-  const inStock = product.stock === undefined || product.stock === null || product.stock > 0;
+  const inStock = product.stock !== undefined && product.stock !== null ? Number(product.stock) > 0 : true;
 
   return (
     <div className="pd-container">
@@ -127,8 +127,8 @@ const ProductDetails = () => {
               </span>
             )}
             {product.isOnSale && (
-              <span style={{ fontSize: '0.75rem', background: '#fee2e2', color: '#dc2626', padding: '3px 10px', borderRadius: '12px', fontWeight: 700, letterSpacing: '0.5px' }}>
-                🔥 SPECIAL SALE
+              <span style={{ fontSize: '0.72rem', background: '#F5ECE6', color: '#8F422E', padding: '3px 10px', borderRadius: '12px', fontWeight: 600, letterSpacing: '0.6px', border: '1px solid #E5D5CB' }}>
+                SALE
               </span>
             )}
           </div>
@@ -138,7 +138,7 @@ const ProductDetails = () => {
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '12px', margin: '0.75rem 0' }}>
             {product.isOnSale && product.discountPrice ? (
               <>
-                <p className="pd-price" style={{ margin: 0, color: '#dc2626', fontWeight: '700' }}>
+                <p className="pd-price" style={{ margin: 0, color: '#8F422E', fontWeight: '700' }}>
                   {product.discountPrice}
                 </p>
                 <span style={{ textDecoration: 'line-through', color: '#888', fontSize: '1.1rem' }}>
@@ -158,7 +158,7 @@ const ProductDetails = () => {
                 <CheckCircle2 size={16} /> In Stock &bull; Dispatched in 24-48 Hours
               </span>
             ) : (
-              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#b23b3b', fontSize: '0.9rem', fontWeight: 500 }}>
+              <span style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', color: '#8F422E', fontSize: '0.9rem', fontWeight: 500 }}>
                 <AlertCircle size={16} /> Currently Out of Stock
               </span>
             )}
@@ -176,7 +176,7 @@ const ProductDetails = () => {
               className={`btn-secondary pd-wishlist-btn ${isWished ? 'is-wishlisted' : ''}`}
               onClick={handleToggleWishlist}
             >
-              <Heart size={22} fill={isWished ? 'currentColor' : 'none'} /> {isWished ? 'In Wishlist' : 'Add to Wishlist'}
+              <Heart size={22} fill={isWished ? '#8F422E' : 'none'} color={isWished ? '#8F422E' : 'currentColor'} /> {isWished ? 'In Wishlist' : 'Add to Wishlist'}
             </button>
           </div>
 

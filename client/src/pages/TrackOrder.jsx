@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
-import { Search, Truck, Package, CheckCircle2, Clock, MapPin, Copy, Check, AlertCircle, ArrowLeft } from 'lucide-react';
+import { Search, Truck, Package, CheckCircle2, MapPin, Copy, Check, AlertCircle, ArrowLeft } from 'lucide-react';
 import { API_URL } from '../utils/api';
 
 const STAGES = [
@@ -40,12 +40,6 @@ const TrackOrder = () => {
   const [error, setError] = useState('');
   const [copied, setCopied] = useState(false);
 
-  useEffect(() => {
-    if (initialId) {
-      handleTrack(initialId);
-    }
-  }, [initialId]);
-
   const handleTrack = async (idToSearch) => {
     const query = String(idToSearch || orderQuery).trim();
     if (!query) {
@@ -73,6 +67,12 @@ const TrackOrder = () => {
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (initialId) {
+      handleTrack(initialId);
+    }
+  }, [initialId]);
 
   const copyTracking = () => {
     if (!order?.tracking_number) return;

@@ -21,18 +21,11 @@ const writeLocalWishlist = (items) => {
 };
 
 export const WishlistProvider = ({ children }) => {
-  const [wishlistItems, setWishlistItems] = useState([]);
+  const [wishlistItems, setWishlistItems] = useState(readLocalWishlist);
   const { user, token } = useAuth();
 
-  useEffect(() => {
-    if (user && token) {
-      mergeLocalWishlistThenFetch();
-    } else {
-      setWishlistItems(readLocalWishlist());
-    }
-  }, [user, token]);
-
   const fetchWishlist = async () => {
+    if (!token) return;
     try {
       const res = await fetch(`${API_URL}/api/wishlist`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -58,6 +51,7 @@ export const WishlistProvider = ({ children }) => {
       }
       const serverItems = await res.json();
       const serverIds = new Set(serverItems.map((item) => item.id));
+
       for (const item of localItems) {
         if (!serverIds.has(item.id)) {
           await fetch(`${API_URL}/api/wishlist/toggle`, {
@@ -70,15 +64,21 @@ export const WishlistProvider = ({ children }) => {
           });
         }
       }
-      if (localItems.length > 0) {
-        localStorage.removeItem(LOCAL_WISHLIST_KEY);
-      }
+      localStorage.removeItem(LOCAL_WISHLIST_KEY);
       await fetchWishlist();
     } catch (error) {
       console.error('Failed to merge wishlist:', error);
       await fetchWishlist();
     }
   };
+
+  useEffect(() => {
+    if (user && token) {
+      mergeLocalWishlistThenFetch();
+    } else {
+      setWishlistItems(readLocalWishlist());
+    }
+  }, [user, token]);
 
   const toggleWishlist = async (product) => {
     if (!token) {

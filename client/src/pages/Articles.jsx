@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Clock, Calendar, Search, ArrowRight, ShieldCheck, Tag } from 'lucide-react';
+import { BookOpen, Clock, Calendar, Search, ArrowRight, ShieldCheck } from 'lucide-react';
 import { ARTICLES_DATA } from '../data/articlesData';
 
 const CATEGORIES = [
@@ -27,7 +27,7 @@ const Articles = () => {
   });
 
   return (
-    <div className="articles-container" style={{ maxWidth: '1240px', margin: '0 auto', padding: '120px 24px 80px 24px' }}>
+    <div className="articles-container" style={{ maxWidth: '1200px', margin: '0 auto', padding: '120px 20px 80px 20px' }}>
       {/* Header & Title */}
       <div style={{ textAlign: 'center', maxWidth: '760px', margin: '0 auto 40px auto' }}>
         <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', background: '#F5F1E7', color: '#468165', padding: '6px 14px', borderRadius: '20px', fontSize: '0.85rem', fontWeight: 600, border: '1px solid #e2dac9', marginBottom: '16px' }}>
@@ -96,7 +96,7 @@ const Articles = () => {
           <p>Try searching for a different keyword or selecting "All" categories.</p>
         </div>
       ) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(340px, 1fr))', gap: '30px' }}>
+        <div className="articles-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(min(100%, 290px), 1fr))', gap: '24px' }}>
           {filteredArticles.map((article) => (
             <article
               key={article.id}

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Flame, ArrowRight, Tag, Check, Sparkles, Percent } from 'lucide-react';
+import { ArrowRight, Check } from 'lucide-react';
 
 const SaleBanner = ({ onShopSale, saleCount = 0 }) => {
   const [copied, setCopied] = useState(false);
@@ -21,11 +21,11 @@ const SaleBanner = ({ onShopSale, saleCount = 0 }) => {
     >
       <div
         style={{
-          background: 'linear-gradient(135deg, #1E3A2F 0%, #2D5A47 60%, #468165 100%)',
+          background: 'linear-gradient(135deg, #203e30 0%, #2b5643 55%, #3c6e56 100%)',
           borderRadius: '16px',
           padding: '30px 35px',
           color: '#F5F1E7',
-          boxShadow: '0 10px 30px rgba(30, 58, 47, 0.15)',
+          boxShadow: '0 10px 30px rgba(32, 62, 48, 0.15)',
           position: 'relative',
           overflow: 'hidden',
           display: 'flex',
@@ -55,20 +55,18 @@ const SaleBanner = ({ onShopSale, saleCount = 0 }) => {
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '6px',
-              backgroundColor: 'rgba(245, 241, 231, 0.15)',
-              border: '1px solid rgba(245, 241, 231, 0.3)',
+              backgroundColor: 'rgba(245, 241, 231, 0.12)',
+              border: '1px solid rgba(245, 241, 231, 0.25)',
               borderRadius: '30px',
               padding: '4px 14px',
-              fontSize: '0.78rem',
-              fontWeight: '700',
+              fontSize: '0.75rem',
+              fontWeight: '600',
               letterSpacing: '1px',
               textTransform: 'uppercase',
-              color: '#FCD34D',
+              color: '#F5F1E7',
               marginBottom: '12px'
             }}
           >
-            <Flame size={14} color="#F59E0B" />
             <span>SEASONAL SALE • LIMITED TIME</span>
           </div>
 
@@ -90,7 +88,7 @@ const SaleBanner = ({ onShopSale, saleCount = 0 }) => {
             style={{
               margin: '0 0 16px 0',
               fontSize: '0.95rem',
-              color: '#E2E8F0',
+              color: '#E8E4DA',
               lineHeight: 1.5,
               maxWidth: '560px'
             }}
@@ -105,15 +103,11 @@ const SaleBanner = ({ onShopSale, saleCount = 0 }) => {
               flexWrap: 'wrap',
               gap: '16px',
               fontSize: '0.82rem',
-              color: '#CBD5E1'
+              color: '#D8D4CA'
             }}
           >
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-              <Sparkles size={13} color="#FCD34D" /> Plastic-free eco packaging
-            </span>
-            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '5px' }}>
-              <Percent size={13} color="#FCD34D" /> Special clearance discounts
-            </span>
+            <span>• Plastic-free eco packaging</span>
+            <span>• Verified stock & pan-India shipping</span>
           </div>
         </div>
 
@@ -131,8 +125,8 @@ const SaleBanner = ({ onShopSale, saleCount = 0 }) => {
           {/* Promo code badge */}
           <div
             style={{
-              backgroundColor: 'rgba(0, 0, 0, 0.25)',
-              border: '1px dashed rgba(255, 255, 255, 0.35)',
+              backgroundColor: 'rgba(0, 0, 0, 0.2)',
+              border: '1px dashed rgba(245, 241, 231, 0.35)',
               borderRadius: '10px',
               padding: '8px 14px',
               display: 'flex',
@@ -142,7 +136,7 @@ const SaleBanner = ({ onShopSale, saleCount = 0 }) => {
             }}
           >
             <div>
-              <span style={{ display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#94A3B8' }}>
+              <span style={{ display: 'block', fontSize: '0.68rem', textTransform: 'uppercase', letterSpacing: '0.5px', color: '#CBD5E1' }}>
                 Coupon Code
               </span>
               <strong style={{ fontSize: '1rem', letterSpacing: '1px', color: '#FFFFFF' }}>
@@ -154,13 +148,13 @@ const SaleBanner = ({ onShopSale, saleCount = 0 }) => {
               type="button"
               onClick={handleCopyCode}
               style={{
-                backgroundColor: copied ? '#16A34A' : '#FFFFFF',
-                color: copied ? '#FFFFFF' : '#1E3A2F',
+                backgroundColor: copied ? '#35624C' : '#F5F1E7',
+                color: copied ? '#FFFFFF' : '#203E30',
                 border: 'none',
                 borderRadius: '6px',
                 padding: '6px 12px',
                 fontSize: '0.78rem',
-                fontWeight: '700',
+                fontWeight: '600',
                 cursor: 'pointer',
                 display: 'inline-flex',
                 alignItems: 'center',
@@ -168,15 +162,7 @@ const SaleBanner = ({ onShopSale, saleCount = 0 }) => {
                 transition: 'all 0.2s ease'
               }}
             >
-              {copied ? (
-                <>
-                  <Check size={13} /> Copied!
-                </>
-              ) : (
-                <>
-                  <Tag size={13} /> Copy Code
-                </>
-              )}
+              {copied ? 'Copied!' : 'Copy Code'}
             </button>
           </div>
 
@@ -185,22 +171,28 @@ const SaleBanner = ({ onShopSale, saleCount = 0 }) => {
             type="button"
             onClick={onShopSale}
             style={{
-              backgroundColor: '#F59E0B',
-              color: '#1E293B',
+              backgroundColor: '#F5F1E7',
+              color: '#203E30',
               border: 'none',
               borderRadius: '30px',
               padding: '12px 24px',
-              fontSize: '0.95rem',
-              fontWeight: '700',
+              fontSize: '0.92rem',
+              fontWeight: '600',
               cursor: 'pointer',
               display: 'inline-flex',
               alignItems: 'center',
               gap: '8px',
-              boxShadow: '0 4px 14px rgba(245, 158, 11, 0.4)',
-              transition: 'transform 0.15s ease, box-shadow 0.15s ease'
+              boxShadow: '0 4px 12px rgba(0, 0, 0, 0.12)',
+              transition: 'transform 0.15s ease, background-color 0.15s ease'
             }}
-            onMouseEnter={(e) => (e.currentTarget.style.transform = 'translateY(-2px)')}
-            onMouseLeave={(e) => (e.currentTarget.style.transform = 'translateY(0)')}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = '#FFFFFF';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = '#F5F1E7';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
           >
             <span>Explore On-Sale Items</span>
             <ArrowRight size={16} />
