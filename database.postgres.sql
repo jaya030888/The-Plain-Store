@@ -76,7 +76,7 @@ CREATE TABLE IF NOT EXISTS coupons (
 -- 7. Orders Table
 CREATE TABLE IF NOT EXISTS orders (
     id SERIAL PRIMARY KEY,
-    user_id INT NOT NULL,
+    user_id INT DEFAULT NULL,
     address_id INT NOT NULL,
     subtotal DECIMAL(10, 2) NOT NULL,
     delivery_fee DECIMAL(10, 2) DEFAULT 0.00,
@@ -85,6 +85,9 @@ CREATE TABLE IF NOT EXISTS orders (
     discount_amount DECIMAL(10, 2) DEFAULT 0.00,
     payment_status VARCHAR(50) DEFAULT 'pending' CHECK (payment_status IN ('pending', 'paid', 'failed')),
     order_status VARCHAR(50) DEFAULT 'pending' CHECK (order_status IN ('pending', 'confirmed', 'processing', 'shipped', 'out_for_delivery', 'delivered', 'cancelled')),
+    tracking_number VARCHAR(100) DEFAULT NULL,
+    carrier VARCHAR(100) DEFAULT NULL,
+    estimated_delivery DATE DEFAULT NULL,
     razorpay_order_id VARCHAR(255),
     razorpay_payment_id VARCHAR(255),
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,

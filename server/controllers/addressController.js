@@ -26,7 +26,8 @@ exports.addAddress = async (req, res) => {
       [userId, full_name, phone, house_flat, street, area, city, state, pincode, is_default || false]
     );
 
-    res.status(201).json({ id: result.insertId, message: 'Address added successfully' });
+    const newId = result?.insertId || result?.[0]?.id || result?.id;
+    res.status(201).json({ id: newId, message: 'Address added successfully' });
   } catch (error) {
     console.error('Error adding address:', error);
     res.status(500).json({ message: 'Server error adding address' });

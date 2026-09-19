@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect } from 'react';
+import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
 import { useAuth } from './AuthContext';
 import { API_URL } from '../utils/api';
 
@@ -25,6 +25,7 @@ export const CartProvider = ({ children }) => {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const { user, token } = useAuth();
+  const isMergingRef = useRef(false);
 
   useEffect(() => {
     if (user && token) {
@@ -55,7 +56,15 @@ export const CartProvider = ({ children }) => {
   };
 
   const mergeLocalCartThenFetch = async () => {
+    if (isMergingRef.current) return;
     const localItems = readLocalCart();
+    if (!localItems || localItems.length === 0) {
+      await fetchCart();
+      return;
+    }
+
+    isMergingRef.current = true;
+    localStorage.removeItem(LOCAL_CART_KEY);
     try {
       for (const item of localItems) {
         await fetch(`${API_URL}/api/cart/add`, {
@@ -64,34 +73,32 @@ export const CartProvider = ({ children }) => {
           body: JSON.stringify({ productId: item.id, quantity: item.quantity || 1 })
         });
       }
-      if (localItems.length > 0) {
-        localStorage.removeItem(LOCAL_CART_KEY);
-      }
       await fetchCart();
     } catch (error) {
       console.error('Failed to merge cart:', error);
       await fetchCart();
+    } finally {
+      isMergingRef.current = false;
     }
   };
 
   const addToCart = async (product, qty = 1) => {
     if (!token) {
-      setCartItems((prev) => {
-        const existing = prev.find((item) => item.id === product.id);
-        const next = existing
-          ? prev.map((item) => item.id === product.id ? { ...item, quantity: item.quantity + qty } : item)
-          : [...prev, {
-            id: product.id,
-            title: product.title,
-            price: product.discountPrice || product.price,
-            rawPrice: product.rawPrice,
-            quantity: qty,
-            image: product.image,
-            stock: product.stock
-          }];
-        writeLocalCart(next);
-        return next;
-      });
+      const current = readLocalCart();
+      const existing = current.find((item) => item.id === product.id);
+      const next = existing
+        ? current.map((item) => item.id === product.id ? { ...item, quantity: item.quantity + qty } : item)
+        : [...current, {
+          id: product.id,
+          title: product.title,
+          price: product.discountPrice || product.price,
+          rawPrice: product.rawPrice,
+          quantity: qty,
+          image: product.image,
+          stock: product.stock
+        }];
+      writeLocalCart(next);
+      setCartItems(next);
       return;
     }
 
@@ -114,11 +121,10 @@ export const CartProvider = ({ children }) => {
 
   const removeFromCart = async (productId) => {
     if (!token) {
-      setCartItems((prev) => {
-        const next = prev.filter((item) => item.id !== productId);
-        writeLocalCart(next);
-        return next;
-      });
+      const current = readLocalCart();
+      const next = current.filter((item) => item.id !== productId);
+      writeLocalCart(next);
+      setCartItems(next);
       return;
     }
 
@@ -137,13 +143,12 @@ export const CartProvider = ({ children }) => {
 
   const updateQuantity = async (productId, quantity) => {
     if (!token) {
-      setCartItems((prev) => {
-        const next = quantity <= 0
-          ? prev.filter((item) => item.id !== productId)
-          : prev.map((item) => item.id === productId ? { ...item, quantity } : item);
-        writeLocalCart(next);
-        return next;
-      });
+      const current = readLocalCart();
+      const next = quantity <= 0
+        ? current.filter((item) => item.id !== productId)
+        : current.map((item) => item.id === productId ? { ...item, quantity } : item);
+      writeLocalCart(next);
+      setCartItems(next);
       return;
     }
 

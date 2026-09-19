@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
+import { Truck } from 'lucide-react';
 import { API_URL } from '../utils/api';
 
 const Orders = () => {
@@ -86,7 +87,14 @@ const Orders = () => {
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid #eee' }}>
                   <p style={{ margin: 0, fontWeight: 'bold' }}>Total: ${parseFloat(order.total).toFixed(2)}</p>
-                  <Link to={`/orders/${order.id}`} className="btn-outline" style={{ textDecoration: 'none' }}>View Details</Link>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <Link to={`/track?id=${order.id}`} className="btn-outline" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '5px', fontSize: '13px', padding: '6px 12px' }}>
+                      <Truck size={14} color="#468165" /> Track
+                    </Link>
+                    <Link to={`/orders/${order.id}`} className="btn-primary" style={{ textDecoration: 'none', fontSize: '13px', padding: '6px 14px' }}>
+                      View Details
+                    </Link>
+                  </div>
                 </div>
               </div>
             ))}

@@ -54,9 +54,13 @@ const CategoriesManager = () => {
       if (res.ok) {
         setShowModal(false);
         fetchCategories();
+      } else {
+        const err = await res.json();
+        alert(err.message || 'Failed to save category');
       }
     } catch (error) {
       console.error(error);
+      alert('Error connecting to server');
     }
   };
 

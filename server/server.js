@@ -43,6 +43,7 @@ const couponRoutes = require('./routes/couponRoutes');
 const customerRoutes = require('./routes/customerRoutes');
 const adminRoutes = require('./routes/adminRoutes');
 const authRoutes = require('./routes/authRoutes');
+const contactRoutes = require('./routes/contactRoutes');
 
 app.use('/api/products', productRoutes);
 app.use('/api/cart', cartRoutes);
@@ -54,6 +55,7 @@ app.use('/api/coupons', couponRoutes);
 app.use('/api/customers', customerRoutes);
 app.use('/api/admin', adminRoutes);
 app.use('/api/auth', authRoutes);
+app.use('/api/contact', contactRoutes);
 
 app.get('/', (req, res) => {
   res.json({ status: 'ok', message: 'The Plain Store API' });

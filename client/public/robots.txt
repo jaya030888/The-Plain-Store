@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /profile
+Disallow: /orders/
+Disallow: /admin
+
+Sitemap: https://theplainstore.com/sitemap.xml

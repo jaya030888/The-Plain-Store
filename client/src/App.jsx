@@ -16,7 +16,16 @@ import Wishlist from './pages/Wishlist';
 import Profile from './pages/Profile';
 import Orders from './pages/Orders';
 import OrderDetails from './pages/OrderDetails';
+import TrackOrder from './pages/TrackOrder';
 import About from './pages/About';
+import Contact from './pages/Contact';
+import PrivacyPolicy from './pages/PrivacyPolicy';
+import TermsConditions from './pages/TermsConditions';
+import ShippingPolicy from './pages/ShippingPolicy';
+import ReturnRefundPolicy from './pages/ReturnRefundPolicy';
+import CancellationPolicy from './pages/CancellationPolicy';
+import Articles from './pages/Articles';
+import ArticleDetails from './pages/ArticleDetails';
 import ProtectedRoute from './components/ProtectedRoute';
 import './index.css';
 
@@ -32,6 +41,18 @@ function App() {
                 <Routes>
                   <Route path="/" element={<Home />} />
                   <Route path="/about" element={<About />} />
+                  <Route path="/articles" element={<Articles />} />
+                  <Route path="/articles/:slug" element={<ArticleDetails />} />
+                  <Route path="/blog" element={<Articles />} />
+                  <Route path="/blog/:slug" element={<ArticleDetails />} />
+                  <Route path="/contact" element={<Contact />} />
+                  <Route path="/track" element={<TrackOrder />} />
+                  <Route path="/privacy-policy" element={<PrivacyPolicy />} />
+                  <Route path="/terms" element={<TermsConditions />} />
+                  <Route path="/shipping-policy" element={<ShippingPolicy />} />
+                  <Route path="/returns-policy" element={<ReturnRefundPolicy />} />
+                  <Route path="/refund-policy" element={<ReturnRefundPolicy />} />
+                  <Route path="/cancellation-policy" element={<CancellationPolicy />} />
                   <Route path="/product/:id" element={<ProductDetails />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />

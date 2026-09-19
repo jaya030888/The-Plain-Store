@@ -10,11 +10,24 @@ exports.getAllCategories = async (req, res) => {
   }
 };
 
+const generateSlug = (text) => {
+  return String(text)
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '');
+};
+
 exports.createCategory = async (req, res) => {
   try {
-    const { name, slug } = req.body;
-    const [result] = await db.query('INSERT INTO categories (name, slug) VALUES (?, ?)', [name, slug]);
-    res.status(201).json({ id: result.insertId, message: 'Category created' });
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Category name is required' });
+    }
+    const slug = req.body.slug && req.body.slug.trim() ? req.body.slug.trim() : generateSlug(name);
+    const [result] = await db.query('INSERT INTO categories (name, slug) VALUES (?, ?)', [name.trim(), slug]);
+    res.status(201).json({ id: result.insertId, message: 'Category created', slug });
   } catch (error) {
     console.error('Error creating category:', error);
     res.status(500).json({ message: 'Server error creating category' });
@@ -24,9 +37,13 @@ exports.createCategory = async (req, res) => {
 exports.updateCategory = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, slug } = req.body;
-    await db.query('UPDATE categories SET name=?, slug=? WHERE id=?', [name, slug, id]);
-    res.json({ message: 'Category updated' });
+    const { name } = req.body;
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Category name is required' });
+    }
+    const slug = req.body.slug && req.body.slug.trim() ? req.body.slug.trim() : generateSlug(name);
+    await db.query('UPDATE categories SET name=?, slug=? WHERE id=?', [name.trim(), slug, id]);
+    res.json({ message: 'Category updated', slug });
   } catch (error) {
     console.error('Error updating category:', error);
     res.status(500).json({ message: 'Server error updating category' });

@@ -55,6 +55,30 @@ const ProductCard = ({ product }) => {
   return (
     <div className="product-card" ref={cardRef} onClick={handleCardClick} style={{ cursor: 'pointer', position: 'relative' }}>
       <div className="product-image-wrapper">
+        {product.isOnSale && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '12px',
+              left: '12px',
+              backgroundColor: '#dc2626',
+              color: '#ffffff',
+              fontSize: '0.72rem',
+              fontWeight: '700',
+              letterSpacing: '0.6px',
+              padding: '4px 10px',
+              borderRadius: '20px',
+              textTransform: 'uppercase',
+              zIndex: 3,
+              boxShadow: '0 2px 8px rgba(220, 38, 38, 0.35)',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '4px'
+            }}
+          >
+            <span>SALE</span>
+          </div>
+        )}
         <button 
           onClick={handleToggleWishlist}
           className={`product-wishlist-button ${isWished ? 'is-wishlisted' : ''}`}
@@ -73,7 +97,18 @@ const ProductCard = ({ product }) => {
       </div>
       <div className="product-info">
         <h3 className="product-title">{product.title}</h3>
-        <p className="product-price">{product.price}</p>
+        {product.isOnSale && product.discountPrice ? (
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '15px' }}>
+            <span className="product-price" style={{ color: '#dc2626', fontWeight: '700', margin: 0 }}>
+              {product.discountPrice}
+            </span>
+            <span style={{ fontSize: '0.88rem', color: '#94a3b8', textDecoration: 'line-through' }}>
+              {product.price}
+            </span>
+          </div>
+        ) : (
+          <p className="product-price">{product.price}</p>
+        )}
         <button className="btn-add-to-cart" onClick={handleAddToCart}>
           <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px' }}>
             <ShoppingBag size={18} /> Add to Cart

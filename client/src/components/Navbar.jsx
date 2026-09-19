@@ -1,13 +1,23 @@
-import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Menu, Search, X, MapPin, Globe } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { ShoppingCart, Menu, Search, X, MapPin, Globe, Truck, ChevronDown, Layers } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useAuth } from '../context/AuthContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
+import { API_URL } from '../utils/api';
+
+const DEFAULT_CATEGORIES = [
+  { id: 1, name: 'Home Decor', slug: 'home-decor' },
+  { id: 2, name: 'Organization', slug: 'organization' },
+  { id: 3, name: 'Kitchen & Dining', slug: 'kitchen-dining' },
+  { id: 4, name: 'Wellness & Living', slug: 'wellness' }
+];
 
 const Navbar = () => {
   const [scrolled, setScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  const [isLanguageMenuOpen, setIsLanguageMenuOpen] = useState(false);
+  const [isCategoryDropdownOpen, setIsCategoryDropdownOpen] = useState(false);
+  const [categories, setCategories] = useState(DEFAULT_CATEGORIES);
+  const dropdownRef = useRef(null);
   const { setIsCartOpen, cartItems } = useCart();
   const { user, logout } = useAuth();
   const navigate = useNavigate();
@@ -27,12 +37,50 @@ const Navbar = () => {
     return () => window.removeEventListener('scroll', handleScroll);
   }, []);
 
+  useEffect(() => {
+    const fetchNavCategories = async () => {
+      try {
+        const res = await fetch(`${API_URL}/api/categories`);
+        if (res.ok) {
+          const data = await res.json();
+          if (Array.isArray(data) && data.length > 0) {
+            setCategories(data);
+          }
+        }
+      } catch (err) {
+        // Fallback already present in DEFAULT_CATEGORIES
+      }
+    };
+    fetchNavCategories();
+  }, []);
+
+  // Close category dropdown when clicked outside
+  useEffect(() => {
+    const handleClickOutside = (e) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(e.target)) {
+        setIsCategoryDropdownOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, []);
+
   const totalItems = cartItems.reduce((total, item) => total + item.quantity, 0);
 
   const handleSearch = (event) => {
     event.preventDefault();
     const query = searchTerm.trim();
     navigate(query ? `/?search=${encodeURIComponent(query)}` : '/');
+  };
+
+  const handleCategorySelect = (slug) => {
+    setIsCategoryDropdownOpen(false);
+    setIsMobileMenuOpen(false);
+    if (slug === 'all') {
+      navigate('/');
+    } else {
+      navigate(`/?category=${encodeURIComponent(slug)}`);
+    }
   };
 
   return (
@@ -43,6 +91,55 @@ const Navbar = () => {
           <Link to="/" className="nav-logo-link" aria-label="The Plain Store home">
             <div className="nav-logo">The Plain Store</div>
           </Link>
+          <div className="nav-desktop-links">
+            <Link to="/" className={`nav-desktop-link ${location.pathname === '/' && !location.search ? 'active' : ''}`}>Shop</Link>
+            
+            {/* Categories Dropdown */}
+            <div 
+              className="nav-dropdown-wrapper" 
+              ref={dropdownRef}
+              onMouseEnter={() => setIsCategoryDropdownOpen(true)}
+              onMouseLeave={() => setIsCategoryDropdownOpen(false)}
+            >
+              <button 
+                type="button"
+                className={`nav-desktop-link nav-dropdown-trigger ${location.search.includes('category=') ? 'active' : ''}`}
+                onClick={() => setIsCategoryDropdownOpen(prev => !prev)}
+                aria-expanded={isCategoryDropdownOpen}
+              >
+                <span>Categories</span>
+                <ChevronDown size={14} style={{ transform: isCategoryDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+              </button>
+
+              {isCategoryDropdownOpen && (
+                <div className="nav-dropdown-menu">
+                  <div className="nav-dropdown-header">Shop By Category</div>
+                  <button 
+                    type="button"
+                    className="nav-dropdown-item"
+                    onClick={() => handleCategorySelect('all')}
+                  >
+                    All Categories
+                  </button>
+                  {categories.map((cat) => (
+                    <button 
+                      key={cat.id || cat.slug}
+                      type="button"
+                      className="nav-dropdown-item"
+                      onClick={() => handleCategorySelect(cat.slug)}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Link to="/articles" className={`nav-desktop-link ${location.pathname.startsWith('/articles') ? 'active' : ''}`}>Articles</Link>
+            <Link to="/about" className={`nav-desktop-link ${location.pathname === '/about' ? 'active' : ''}`}>About</Link>
+            <Link to="/contact" className={`nav-desktop-link ${location.pathname === '/contact' ? 'active' : ''}`}>Contact</Link>
+            <Link to="/track" className={`nav-desktop-link ${location.pathname === '/track' ? 'active' : ''}`}>Track Order</Link>
+          </div>
         </div>
         
         <form className="nav-search-container" onSubmit={handleSearch}>
@@ -70,6 +167,11 @@ const Navbar = () => {
             </div>
           )}
           
+          <Link to="/track" className="nav-track-link" style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '13px', color: '#444', textDecoration: 'none', padding: '6px 10px', borderRadius: '4px', background: 'rgba(0,0,0,0.03)' }} title="Track Order">
+            <Truck size={16} color="#468165" />
+            <span className="track-text">Track</span>
+          </Link>
+
           {!user && (
             <div className="nav-login-link">
               <Link to="/login" state={{ from: location }}>Login</Link>
@@ -100,7 +202,30 @@ const Navbar = () => {
             </div>
             <ul style={{ listStyle: 'none', padding: 0, display: 'flex', flexDirection: 'column', gap: '20px', fontSize: '1.2rem', fontFamily: 'var(--font-body)' }}>
 
+              <li><Link to="/" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none', color: 'var(--color-text)' }}>Shop All</Link></li>
+              
+              <li style={{ borderTop: '1px solid #f0eee6', borderBottom: '1px solid #f0eee6', padding: '12px 0' }}>
+                <div style={{ fontSize: '0.85rem', textTransform: 'uppercase', letterSpacing: '1px', color: '#468165', fontWeight: 600, marginBottom: '10px' }}>
+                  Categories
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', paddingLeft: '8px', fontSize: '1rem' }}>
+                  {categories.map(c => (
+                    <button
+                      key={c.id || c.slug}
+                      type="button"
+                      onClick={() => handleCategorySelect(c.slug)}
+                      style={{ background: 'none', border: 'none', textAlign: 'left', cursor: 'pointer', color: '#555', padding: '2px 0', fontSize: '1rem', fontFamily: 'inherit' }}
+                    >
+                      &bull; {c.name}
+                    </button>
+                  ))}
+                </div>
+              </li>
+
+              <li><Link to="/articles" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none', color: 'var(--color-text)' }}>Guides & Articles</Link></li>
               <li><Link to="/about" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none', color: 'var(--color-text)' }}>About Us</Link></li>
+              <li><Link to="/contact" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none', color: 'var(--color-text)' }}>Contact Us</Link></li>
+              <li><Link to="/track" onClick={() => setIsMobileMenuOpen(false)} style={{ textDecoration: 'none', color: 'var(--color-text)', display: 'flex', alignItems: 'center', gap: '8px' }}><Truck size={20} color="#468165" /> Track Order</Link></li>
               
               {user ? (
                 <>

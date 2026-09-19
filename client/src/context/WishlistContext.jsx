@@ -82,14 +82,23 @@ export const WishlistProvider = ({ children }) => {
 
   const toggleWishlist = async (product) => {
     if (!token) {
+      const exists = wishlistItems.find((item) => item.id === product.id);
       setWishlistItems((prev) => {
-        const exists = prev.find((item) => item.id === product.id);
         const next = exists
           ? prev.filter((item) => item.id !== product.id)
           : [...prev, product];
         writeLocalWishlist(next);
         return next;
       });
+
+      // If user is adding to wishlist (not removing), notify admin backend
+      if (!exists) {
+        fetch(`${API_URL}/api/wishlist/guest-notify`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ productId: product.id })
+        }).catch((err) => console.warn('Guest wishlist notify failed:', err));
+      }
       return;
     }
 

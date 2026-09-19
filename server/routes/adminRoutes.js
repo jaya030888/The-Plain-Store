@@ -26,4 +26,56 @@ router.get('/dashboard', protect, adminOnly, async (req, res) => {
   }
 });
 
+// Notifications Endpoints
+router.get('/notifications', protect, adminOnly, async (req, res) => {
+  try {
+    const [notifications] = await db.query(
+      'SELECT * FROM admin_notifications ORDER BY created_at DESC LIMIT 50'
+    );
+    const [countRows] = await db.query(
+      'SELECT COUNT(*) as unread_count FROM admin_notifications WHERE is_read = FALSE'
+    );
+    const unreadCount = parseInt(countRows[0]?.unread_count || 0, 10);
+    res.json({
+      notifications: notifications || [],
+      unreadCount
+    });
+  } catch (error) {
+    console.error('Error fetching admin notifications:', error);
+    res.status(500).json({ message: 'Server error fetching notifications' });
+  }
+});
+
+router.put('/notifications/:id/read', protect, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query('UPDATE admin_notifications SET is_read = TRUE WHERE id = ?', [id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error updating notification:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.put('/notifications/mark-all-read', protect, adminOnly, async (req, res) => {
+  try {
+    await db.query('UPDATE admin_notifications SET is_read = TRUE');
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error marking all notifications as read:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
+router.delete('/notifications/:id', protect, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    await db.query('DELETE FROM admin_notifications WHERE id = ?', [id]);
+    res.json({ success: true });
+  } catch (error) {
+    console.error('Error deleting notification:', error);
+    res.status(500).json({ message: 'Server error' });
+  }
+});
+
 module.exports = router;

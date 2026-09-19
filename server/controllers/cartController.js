@@ -4,10 +4,10 @@ exports.getCart = async (req, res) => {
   try {
     const userId = req.user.id;
     const [rows] = await db.query(`
-      SELECT ci.id, ci.product_id, ci.quantity, p.name as title, p.price, p.discount_price, p.stock, pi.image_url as image
+      SELECT ci.id, ci.product_id, ci.quantity, p.name as title, p.price, p.discount_price, p.stock,
+             (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as image
       FROM cart_items ci
       JOIN products p ON ci.product_id = p.id
-      LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = TRUE
       WHERE ci.user_id = ?
     `, [userId]);
 

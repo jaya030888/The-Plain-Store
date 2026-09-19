@@ -41,7 +41,7 @@ exports.createOrder = async (req, res) => {
         'INSERT INTO addresses (user_id, full_name, phone, house_flat, street, area, city, state, pincode, is_default) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
         [userId, address.full_name, address.phone, address.house_flat, address.street, address.area, address.city, address.state, address.pincode, false]
       );
-      finalAddressId = addrResult.insertId;
+      finalAddressId = addrResult?.insertId || addrResult?.[0]?.id || addrResult?.id;
     }
 
     let subtotal = 0;
@@ -103,16 +103,23 @@ exports.createOrder = async (req, res) => {
     const deliveryFee = 15;
     const total = Math.max(0, subtotal + deliveryFee - discountAmount);
 
+    const trackingNumber = `TPS-TRK-${Date.now().toString().slice(-6)}-${Math.floor(1000 + Math.random() * 9000)}`;
+    const carrier = 'Standard Shipping';
+    const estDelivery = new Date();
+    estDelivery.setDate(estDelivery.getDate() + 5);
+
     const [orderResult] = await conn.query(
-      `INSERT INTO orders (user_id, address_id, subtotal, delivery_fee, total, coupon_id, discount_amount, payment_status, order_status)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-      [userId, finalAddressId, subtotal, deliveryFee, total, validCouponId, discountAmount, 'pending', 'pending']
+      `INSERT INTO orders (user_id, address_id, subtotal, delivery_fee, total, coupon_id, discount_amount, payment_status, order_status, tracking_number, carrier, estimated_delivery)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [userId, finalAddressId, subtotal, deliveryFee, total, validCouponId, discountAmount, 'pending', 'pending', trackingNumber, carrier, estDelivery]
     );
+
+    const orderId = orderResult?.insertId || orderResult?.[0]?.id || orderResult?.id;
 
     for (const item of resolvedItems) {
       await conn.query(
         'INSERT INTO order_items (order_id, product_id, quantity, price_at_purchase) VALUES (?, ?, ?, ?)',
-        [orderResult.insertId, item.productId, item.quantity, item.price]
+        [orderId, item.productId, item.quantity, item.price]
       );
       await conn.query('UPDATE products SET stock = stock - ? WHERE id = ?', [item.quantity, item.productId]);
     }
@@ -123,10 +130,13 @@ exports.createOrder = async (req, res) => {
 
     await conn.commit();
     res.status(201).json({
-      id: orderResult.insertId,
+      id: orderId,
       total,
       payment_status: 'pending',
-      order_status: 'pending'
+      order_status: 'pending',
+      tracking_number: trackingNumber,
+      carrier,
+      estimated_delivery: estDelivery
     });
   } catch (error) {
     await conn.rollback();
@@ -147,10 +157,10 @@ exports.getMyOrders = async (req, res) => {
 
     for (let order of orders) {
       const [items] = await db.query(`
-        SELECT oi.*, p.name as title, pi.image_url as image 
+        SELECT oi.*, p.name as title, 
+               (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as image 
         FROM order_items oi
         JOIN products p ON oi.product_id = p.id
-        LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = TRUE
         WHERE oi.order_id = ?
       `, [order.id]);
       order.items = items;
@@ -181,10 +191,10 @@ exports.getMyOrderById = async (req, res) => {
     const order = orders[0];
 
     const [items] = await db.query(`
-      SELECT oi.*, p.name as title, pi.image_url as image 
+      SELECT oi.*, p.name as title, 
+             (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as image 
       FROM order_items oi
       JOIN products p ON oi.product_id = p.id
-      LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = TRUE
       WHERE oi.order_id = ?
     `, [id]);
     
@@ -200,9 +210,13 @@ exports.getMyOrderById = async (req, res) => {
 exports.getAllOrders = async (req, res) => {
   try {
     const [orders] = await db.query(`
-      SELECT o.*, u.name as customer_name, u.email as customer_email
+      SELECT o.*, 
+             COALESCE(u.name, a.full_name, 'Guest Customer') as customer_name, 
+             COALESCE(u.email, 'Guest Checkout') as customer_email,
+             a.phone as customer_phone
       FROM orders o
-      JOIN users u ON o.user_id = u.id
+      LEFT JOIN users u ON o.user_id = u.id
+      LEFT JOIN addresses a ON o.address_id = a.id
       ORDER BY o.created_at DESC
     `);
     res.json(orders);
@@ -216,11 +230,13 @@ exports.getOrderDetails = async (req, res) => {
   try {
     const { id } = req.params;
     const [orders] = await db.query(`
-      SELECT o.*, u.name as customer_name, u.email as customer_email,
+      SELECT o.*, 
+             COALESCE(u.name, a.full_name, 'Guest Customer') as customer_name, 
+             COALESCE(u.email, 'Guest Checkout') as customer_email,
              a.full_name, a.phone, a.house_flat, a.street, a.area, a.city, a.state, a.pincode
       FROM orders o
-      JOIN users u ON o.user_id = u.id
-      JOIN addresses a ON o.address_id = a.id
+      LEFT JOIN users u ON o.user_id = u.id
+      LEFT JOIN addresses a ON o.address_id = a.id
       WHERE o.id = ?
     `, [id]);
 
@@ -229,10 +245,10 @@ exports.getOrderDetails = async (req, res) => {
     const order = orders[0];
 
     const [items] = await db.query(`
-      SELECT oi.*, p.name as title, pi.image_url as image 
+      SELECT oi.*, p.name as title, 
+             (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as image 
       FROM order_items oi
       JOIN products p ON oi.product_id = p.id
-      LEFT JOIN product_images pi ON p.id = pi.product_id AND pi.is_primary = TRUE
       WHERE oi.order_id = ?
     `, [id]);
     
@@ -248,12 +264,72 @@ exports.getOrderDetails = async (req, res) => {
 exports.updateOrderStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const { status } = req.body;
+    const { status, tracking_number, carrier, estimated_delivery } = req.body;
 
-    await db.query('UPDATE orders SET order_status = ? WHERE id = ?', [status, id]);
-    res.json({ message: 'Order status updated' });
+    const updates = [];
+    const values = [];
+
+    if (status) {
+      updates.push('order_status = ?');
+      values.push(status);
+    }
+    if (tracking_number !== undefined) {
+      updates.push('tracking_number = ?');
+      values.push(tracking_number);
+    }
+    if (carrier !== undefined) {
+      updates.push('carrier = ?');
+      values.push(carrier);
+    }
+    if (estimated_delivery !== undefined) {
+      updates.push('estimated_delivery = ?');
+      values.push(estimated_delivery ? estimated_delivery : null);
+    }
+    updates.push('updated_at = CURRENT_TIMESTAMP');
+    values.push(id);
+
+    if (updates.length > 1) {
+      await db.query(`UPDATE orders SET ${updates.join(', ')} WHERE id = ?`, values);
+    }
+
+    res.json({ message: 'Order updated successfully' });
   } catch (error) {
     console.error('Error updating order status:', error);
     res.status(500).json({ message: 'Server error updating status' });
+  }
+};
+
+exports.trackOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const isNum = !isNaN(Number(id));
+
+    const [orders] = await db.query(`
+      SELECT o.id, o.order_status, o.tracking_number, o.carrier, o.estimated_delivery,
+             o.created_at, o.updated_at, o.total, o.subtotal, o.delivery_fee, o.discount_amount,
+             a.full_name, a.city, a.state, a.pincode
+      FROM orders o
+      LEFT JOIN addresses a ON o.address_id = a.id
+      WHERE ${isNum ? 'o.id = ? OR ' : ''}o.tracking_number = ?
+    `, isNum ? [Number(id), id] : [id]);
+
+    if (orders.length === 0) {
+      return res.status(404).json({ message: 'No shipment found for this Order ID or Tracking Number' });
+    }
+
+    const order = orders[0];
+    const [items] = await db.query(`
+      SELECT oi.quantity, oi.price_at_purchase, p.name as title,
+             (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as image
+      FROM order_items oi
+      JOIN products p ON oi.product_id = p.id
+      WHERE oi.order_id = ?
+    `, [order.id]);
+    
+    order.items = items;
+    res.json(order);
+  } catch (error) {
+    console.error('Error tracking order:', error);
+    res.status(500).json({ message: 'Server error tracking order' });
   }
 };

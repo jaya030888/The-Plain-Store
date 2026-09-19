@@ -9,9 +9,12 @@ router.post('/verify-payment', protect, orderController.verifyPaymentAndCreateOr
 router.get('/my-orders', protect, orderController.getMyOrders);
 router.get('/my-orders/:id', protect, orderController.getMyOrderById);
 
+// Public Track Route
+router.get('/track/:id', orderController.trackOrder);
+
 // Admin Routes
-router.get('/admin', adminOnly, orderController.getAllOrders);
-router.get('/admin/:id', adminOnly, orderController.getOrderDetails);
-router.put('/admin/:id/status', adminOnly, orderController.updateOrderStatus);
+router.get('/admin', protect, adminOnly, orderController.getAllOrders);
+router.get('/admin/:id', protect, adminOnly, orderController.getOrderDetails);
+router.put('/admin/:id/status', protect, adminOnly, orderController.updateOrderStatus);
 
 module.exports = router;

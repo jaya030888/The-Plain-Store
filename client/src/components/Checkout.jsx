@@ -86,6 +86,34 @@ const Checkout = () => {
 
   const guestAddressComplete = Object.values(guestAddress).every((value) => String(value).trim());
 
+  const handleSaveAndSelectAddress = async (e) => {
+    e.preventDefault();
+    if (!guestAddressComplete) return alert('Please complete your shipping address');
+    try {
+      if (token) {
+        const res = await fetch(`${API_URL}/api/addresses`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${token}`
+          },
+          body: JSON.stringify({ ...guestAddress, is_default: true })
+        });
+        if (res.ok) {
+          const data = await res.json();
+          await fetchAddresses();
+          setSelectedAddressId(data.id);
+          setStep(2);
+          return;
+        }
+      }
+      setStep(2);
+    } catch (err) {
+      console.error(err);
+      setStep(2);
+    }
+  };
+
   const continueFromAddress = () => {
     if (token) {
       if (!selectedAddressId) return alert('Please select an address');
@@ -154,10 +182,20 @@ const Checkout = () => {
           <div className="checkout-step">
             <h3>Select Shipping Address</h3>
             {token && addresses.length === 0 ? (
-              <div style={{ padding: '20px', textAlign: 'center' }}>
-                <p>You have no saved addresses.</p>
-                <button className="btn-primary" onClick={() => { closeCheckout(); navigate('/profile'); }}>Add Address in Profile</button>
-              </div>
+              <form onSubmit={handleSaveAndSelectAddress} style={{ display: 'grid', gap: '12px', marginTop: '15px' }}>
+                <p style={{ color: '#666', fontSize: '0.9rem', margin: 0 }}>Please enter your delivery address to proceed:</p>
+                <input className="auth-input" placeholder="Full Name" value={guestAddress.full_name} onChange={(e) => setGuestAddress({ ...guestAddress, full_name: e.target.value })} required />
+                <input className="auth-input" placeholder="Phone" value={guestAddress.phone} onChange={(e) => setGuestAddress({ ...guestAddress, phone: e.target.value })} required />
+                <input className="auth-input" placeholder="House / Flat" value={guestAddress.house_flat} onChange={(e) => setGuestAddress({ ...guestAddress, house_flat: e.target.value })} required />
+                <input className="auth-input" placeholder="Street" value={guestAddress.street} onChange={(e) => setGuestAddress({ ...guestAddress, street: e.target.value })} required />
+                <input className="auth-input" placeholder="Area" value={guestAddress.area} onChange={(e) => setGuestAddress({ ...guestAddress, area: e.target.value })} required />
+                <input className="auth-input" placeholder="City" value={guestAddress.city} onChange={(e) => setGuestAddress({ ...guestAddress, city: e.target.value })} required />
+                <input className="auth-input" placeholder="State" value={guestAddress.state} onChange={(e) => setGuestAddress({ ...guestAddress, state: e.target.value })} required />
+                <input className="auth-input" placeholder="Pincode" value={guestAddress.pincode} onChange={(e) => setGuestAddress({ ...guestAddress, pincode: e.target.value })} required />
+                <button className="btn-primary" type="submit" style={{ marginTop: '10px' }}>
+                  Save & Continue to Order Summary
+                </button>
+              </form>
             ) : token ? (
               <div className="address-list" style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
                 {addresses.map(addr => (
