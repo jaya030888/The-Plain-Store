@@ -26,6 +26,7 @@ CREATE TABLE IF NOT EXISTS addresses (
     state VARCHAR(100) NOT NULL,
     pincode VARCHAR(20) NOT NULL,
     is_default BOOLEAN DEFAULT FALSE,
+    is_deleted BOOLEAN DEFAULT FALSE,
     FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
 );
 

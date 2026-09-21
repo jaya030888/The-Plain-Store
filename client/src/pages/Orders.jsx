@@ -202,9 +202,9 @@ const Orders = () => {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid #eee', flexWrap: 'wrap', gap: '10px' }}>
                   <p style={{ margin: 0, fontWeight: 'bold' }}>Total: ${parseFloat(order.total).toFixed(2)}</p>
                   
-                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                    {/* Return Action Button */}
-                    {!order.return_status && order.order_status !== 'cancelled' && (
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
+                    {/* Return Action Button - Hide if already returned, refunded, or return requested */}
+                    {!order.return_status && !['returned', 'refunded', 'cancelled', 'return requested'].includes(String(order.order_status).toLowerCase()) && (
                       <button 
                         onClick={() => handleOpenReturnModal(order)}
                         className="btn-outline" 

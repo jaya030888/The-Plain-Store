@@ -21,5 +21,8 @@ router.get('/admin/returns', protect, adminOnly, orderController.getAllReturns);
 router.put('/admin/returns/:id/status', protect, adminOnly, orderController.updateReturnStatus);
 router.get('/admin/:id', protect, adminOnly, orderController.getOrderDetails);
 router.put('/admin/:id/status', protect, adminOnly, orderController.updateOrderStatus);
+router.delete('/admin/:id', protect, adminOnly, orderController.deleteOrder);
+router.delete('/admin/:id/return', protect, adminOnly, orderController.dismissReturn);
 
 module.exports = router;
+

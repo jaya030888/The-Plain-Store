@@ -93,15 +93,48 @@ const Profile = () => {
     }
   };
 
+  const [deletingId, setDeletingId] = useState(null);
+  const [addressMessage, setAddressMessage] = useState('');
+
   const handleDelete = async (id) => {
+    if (!window.confirm('Are you sure you want to delete this address?')) return;
+    setDeletingId(id);
+    setAddressMessage('');
     try {
       const res = await fetch(`${API_URL}/api/addresses/${id}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
-      if (res.ok) fetchAddresses();
+      if (res.ok) {
+        await fetchAddresses();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setAddressMessage(data.message || 'Failed to delete address');
+      }
     } catch (error) {
       console.error('Error deleting address', error);
+      setAddressMessage('Network error while deleting address');
+    } finally {
+      setDeletingId(null);
+    }
+  };
+
+  const handleSetDefault = async (id) => {
+    setAddressMessage('');
+    try {
+      const res = await fetch(`${API_URL}/api/addresses/${id}/default`, {
+        method: 'PUT',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        await fetchAddresses();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setAddressMessage(data.message || 'Failed to set default address');
+      }
+    } catch (error) {
+      console.error('Error setting default address', error);
+      setAddressMessage('Network error while updating default address');
     }
   };
 
@@ -176,6 +209,12 @@ const Profile = () => {
           </form>
         )}
 
+        {addressMessage && (
+          <div style={{ padding: '10px 14px', marginBottom: '20px', borderRadius: '6px', background: '#fdf2f2', color: '#e03a3a', fontSize: '0.9rem', border: '1px solid #f8d7da' }}>
+            {addressMessage}
+          </div>
+        )}
+
         <div className="addresses-list" style={{ display: 'grid', gap: '20px' }}>
           {addresses.length === 0 && !showAddForm ? (
             <p>You have no saved addresses.</p>
@@ -187,8 +226,22 @@ const Profile = () => {
                 <p>{addr.phone}</p>
                 <p>{addr.house_flat}, {addr.street}</p>
                 <p>{addr.area}, {addr.city}, {addr.state} - {addr.pincode}</p>
-                <div style={{ marginTop: '15px', display: 'flex', gap: '10px' }}>
-                  <button onClick={() => handleDelete(addr.id)} style={{ color: '#e03a3a', border: 'none', background: 'none', cursor: 'pointer', textDecoration: 'underline' }}>Delete</button>
+                <div style={{ marginTop: '15px', display: 'flex', gap: '15px', alignItems: 'center' }}>
+                  {!addr.is_default && (
+                    <button
+                      onClick={() => handleSetDefault(addr.id)}
+                      style={{ color: '#468165', border: 'none', background: 'none', cursor: 'pointer', textDecoration: 'underline', fontSize: '0.9rem', padding: 0 }}
+                    >
+                      Set as Default
+                    </button>
+                  )}
+                  <button
+                    onClick={() => handleDelete(addr.id)}
+                    disabled={deletingId === addr.id}
+                    style={{ color: '#e03a3a', border: 'none', background: 'none', cursor: deletingId === addr.id ? 'not-allowed' : 'pointer', textDecoration: 'underline', fontSize: '0.9rem', padding: 0, opacity: deletingId === addr.id ? 0.6 : 1 }}
+                  >
+                    {deletingId === addr.id ? 'Deleting...' : 'Delete'}
+                  </button>
                 </div>
               </div>
             ))

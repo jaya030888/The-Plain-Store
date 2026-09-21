@@ -831,16 +831,18 @@ button {
 
 .pd-grid {
   display: grid;
-  grid-template-columns: 1.2fr 1fr; /* Image takes slightly more space */
-  gap: clamp(40px, 6vw, 72px);
-  align-items: center;
+  grid-template-columns: 1.15fr 1fr; /* Image takes slightly more space */
+  gap: clamp(36px, 5vw, 64px);
+  align-items: start;
 }
 
 .pd-image-wrapper {
+  position: sticky;
+  top: 90px;
   border-radius: 16px;
   overflow: hidden;
   background-color: var(--color-white);
-  box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+  box-shadow: 0 12px 32px rgba(0,0,0,0.06);
 }
 
 .pd-image {
@@ -1191,14 +1193,16 @@ button {
 
 .footer-contact-info p {
   display: flex;
-  align-items: center;
-  gap: 6px;
+  align-items: flex-start;
+  gap: 8px;
   margin: 0;
+  line-height: 1.45;
 }
 
 .footer-contact-info svg {
   color: #5bb388;
   flex-shrink: 0;
+  margin-top: 2px;
 }
 
 .footer-compliance-text {

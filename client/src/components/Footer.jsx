@@ -37,8 +37,12 @@ const Footer = () => {
             <li><Link to="/grievance-policy">Grievance Redressal</Link></li>
           </ul>
           <div className="footer-contact-info">
-            <p><Mail size={14} /> support@theplainstore.com</p>
+            <p><Mail size={14} /> <a href="mailto:support@theplainstore.com" style={{ color: 'inherit', textDecoration: 'none' }}>support@theplainstore.com</a></p>
             <p><Phone size={14} /> +91 (Available Mon–Sat, 10am–6pm IST)</p>
+            <p>
+              <MapPin size={14} />
+              <span>Retail & Logistics Hub, Sector 18, Gurugram, Haryana 122002, India</span>
+            </p>
           </div>
         </div>
 

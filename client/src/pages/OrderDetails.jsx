@@ -164,7 +164,7 @@ const OrderDetails = () => {
             </p>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            {!order.return_status && !isCancelled && (
+            {!order.return_status && !isCancelled && !['returned', 'refunded', 'return requested'].includes(String(order.order_status).toLowerCase()) && (
               <button
                 onClick={() => setIsReturnModalOpen(true)}
                 className="btn-outline"

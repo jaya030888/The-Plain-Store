@@ -1,14 +1,38 @@
 const db = require('../config/db');
 
+// In-memory catalog cache for unparameterized queries
+let cachedProductsList = null;
+let lastCacheTime = 0;
+const CATALOG_CACHE_TTL_MS = 30000; // 30 seconds TTL
+
+function invalidateProductCache() {
+  cachedProductsList = null;
+  lastCacheTime = 0;
+}
+exports.invalidateProductCache = invalidateProductCache;
+
 exports.getAllProducts = async (req, res) => {
   try {
     const { search, category, minPrice, maxPrice, sort, onSale } = req.query;
+    const hasFilters = search || category || minPrice || maxPrice || sort || onSale;
+
+    // Return cached list if available and no query parameters
+    if (!hasFilters && cachedProductsList && (Date.now() - lastCacheTime < CATALOG_CACHE_TTL_MS)) {
+      return res.json(cachedProductsList);
+    }
     
     let baseQuery = `
-      SELECT p.*, c.name as category_name, c.slug as category_slug, 
-             (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as image_url 
+      SELECT p.id, p.name, p.slug, p.description, p.price, p.discount_price, p.stock, 
+             p.rating, p.review_count, p.is_featured, p.is_on_sale, 
+             p.is_returnable, p.return_window_days, p.return_policy_type, 
+             p.is_open_box_delivery, p.badge, p.created_at,
+             c.name as category_name, c.slug as category_slug, 
+             pimg.image_url 
       FROM products p 
       LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN LATERAL (
+        SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY is_primary DESC, id ASC LIMIT 1
+      ) pimg ON true
       WHERE 1=1
     `;
     const queryParams = [];
@@ -72,6 +96,11 @@ exports.getAllProducts = async (req, res) => {
       is_open_box_delivery: Boolean(row.is_open_box_delivery),
       badge: row.badge || null
     }));
+
+    if (!hasFilters) {
+      cachedProductsList = products;
+      lastCacheTime = Date.now();
+    }
 
     res.json(products);
   } catch (error) {
@@ -222,6 +251,7 @@ exports.createProduct = async (req, res) => {
       );
     }
 
+    invalidateProductCache();
     res.status(201).json({ id: result.insertId, message: 'Product created successfully' });
   } catch (error) {
     console.error('Error creating product:', error);
@@ -258,6 +288,7 @@ exports.updateProduct = async (req, res) => {
       ]
     );
 
+    invalidateProductCache();
     res.json({ message: 'Product updated successfully' });
   } catch (error) {
     console.error('Error updating product:', error);
@@ -312,6 +343,7 @@ exports.quickUpdateProduct = async (req, res) => {
     params.push(id);
     await db.query(`UPDATE products SET ${updates.join(', ')} WHERE id = ?`, params);
 
+    invalidateProductCache();
     res.json({ message: 'Product updated successfully' });
   } catch (error) {
     console.error('Error quick updating product:', error);
@@ -323,6 +355,7 @@ exports.deleteProduct = async (req, res) => {
   try {
     const { id } = req.params;
     await db.query('DELETE FROM products WHERE id = ?', [id]);
+    invalidateProductCache();
     res.json({ message: 'Product deleted successfully' });
   } catch (error) {
     console.error('Error deleting product:', error);

@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { API_URL } from '../utils/api';
+import { replaceWithFallbackImage } from '../utils/productImage';
 
 const DEFAULT_CATEGORIES = [
   { id: 1, name: 'Home Decor', slug: 'home-decor' },
@@ -25,6 +26,51 @@ const Navbar = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [searchTerm, setSearchTerm] = useState('');
+  const [isSearchModalOpen, setIsSearchModalOpen] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const searchInputRef = useRef(null);
+
+  useEffect(() => {
+    if (isSearchModalOpen && searchInputRef.current) {
+      setTimeout(() => searchInputRef.current?.focus(), 60);
+    }
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setIsSearchModalOpen(false);
+    };
+    if (isSearchModalOpen) {
+      window.addEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = 'hidden';
+    } else {
+      document.body.style.overflow = '';
+    }
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+      document.body.style.overflow = '';
+    };
+  }, [isSearchModalOpen]);
+
+  useEffect(() => {
+    if (!isSearchModalOpen || !searchTerm.trim()) {
+      setSearchResults([]);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      setIsSearching(true);
+      try {
+        const res = await fetch(`${API_URL}/api/products?search=${encodeURIComponent(searchTerm.trim())}`);
+        if (res.ok) {
+          const data = await res.json();
+          setSearchResults(Array.isArray(data) ? data.slice(0, 6) : []);
+        }
+      } catch (err) {
+        console.error('Live search error:', err);
+      } finally {
+        setIsSearching(false);
+      }
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [searchTerm, isSearchModalOpen]);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -83,8 +129,9 @@ const Navbar = () => {
   const totalWishlist = wishlistItems.length;
 
   const handleSearch = (event) => {
-    event.preventDefault();
+    event?.preventDefault();
     const query = searchTerm.trim();
+    setIsSearchModalOpen(false);
     navigate(query ? `/?search=${encodeURIComponent(query)}` : '/');
   };
 
@@ -164,23 +211,20 @@ const Navbar = () => {
             </div>
           </div>
           
-          {/* Center/Right: Sleek Search Bar */}
-          <form className="nav-search-container" onSubmit={handleSearch}>
-            <input
-              type="search"
-              className="search-input"
-              value={searchTerm}
-              onChange={(event) => setSearchTerm(event.target.value)}
-              placeholder="Search essentials..."
-              aria-label="Search products"
-            />
-            <button className="search-btn" aria-label="Search" type="submit">
-              <Search size={16} />
-            </button>
-          </form>
-
           {/* Right: Actions */}
           <div className="nav-actions">
+            {/* Search Icon Trigger */}
+            <button
+              type="button"
+              className="nav-icon-link search-icon-btn"
+              onClick={() => setIsSearchModalOpen(true)}
+              aria-label="Search essentials"
+              title="Search"
+              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px' }}
+            >
+              <Search size={20} />
+            </button>
+
             {user ? (
               <Link to="/profile" className="nav-desktop-link nav-user-link">
                 Account
@@ -431,6 +475,194 @@ const Navbar = () => {
                 )}
               </li>
             </ul>
+          </div>
+        </div>
+      )}
+
+      {/* Search Spotlight Popup Modal */}
+      {isSearchModalOpen && (
+        <div 
+          onClick={() => setIsSearchModalOpen(false)}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.45)',
+            backdropFilter: 'blur(6px)',
+            WebkitBackdropFilter: 'blur(6px)',
+            zIndex: 9999,
+            display: 'flex',
+            alignItems: 'flex-start',
+            justifyContent: 'center',
+            padding: '75px 20px 20px 20px'
+          }}
+        >
+          <div 
+            onClick={e => e.stopPropagation()}
+            style={{
+              backgroundColor: '#fff',
+              width: '100%',
+              maxWidth: '640px',
+              borderRadius: '16px',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column',
+              border: '1px solid #e2e8f0'
+            }}
+          >
+            {/* Search Input Bar */}
+            <form onSubmit={handleSearch} style={{ display: 'flex', alignItems: 'center', padding: '16px 20px', borderBottom: '1px solid #f1f5f9', gap: '12px' }}>
+              <Search size={22} color="#468165" style={{ flexShrink: 0 }} />
+              <input
+                ref={searchInputRef}
+                type="text"
+                value={searchTerm}
+                onChange={e => setSearchTerm(e.target.value)}
+                placeholder="Search products, materials, collections..."
+                style={{
+                  width: '100%',
+                  border: 'none',
+                  outline: 'none',
+                  fontSize: '1.05rem',
+                  color: '#1e293b',
+                  backgroundColor: 'transparent'
+                }}
+              />
+              {searchTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#94a3b8', padding: '4px' }}
+                >
+                  <X size={18} />
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={() => setIsSearchModalOpen(false)}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  backgroundColor: '#f1f5f9',
+                  border: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: '600',
+                  color: '#64748b',
+                  cursor: 'pointer'
+                }}
+              >
+                ESC
+              </button>
+            </form>
+
+            {/* Quick Categories Bar */}
+            <div style={{ display: 'flex', gap: '8px', padding: '10px 20px', backgroundColor: '#f8fafc', borderBottom: '1px solid #f1f5f9', overflowX: 'auto', alignItems: 'center' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.5px', whiteSpace: 'nowrap' }}>
+                Browse:
+              </span>
+              {categories.slice(0, 5).map(cat => (
+                <button
+                  key={cat.id}
+                  type="button"
+                  onClick={() => {
+                    setIsSearchModalOpen(false);
+                    navigate(`/?category=${encodeURIComponent(cat.slug)}`);
+                  }}
+                  style={{
+                    padding: '4px 10px',
+                    borderRadius: '12px',
+                    backgroundColor: '#fff',
+                    border: '1px solid #e2e8f0',
+                    fontSize: '0.8rem',
+                    color: '#475569',
+                    cursor: 'pointer',
+                    whiteSpace: 'nowrap',
+                    fontWeight: '500'
+                  }}
+                >
+                  {cat.name}
+                </button>
+              ))}
+            </div>
+
+            {/* Search Results Area */}
+            <div style={{ maxHeight: '380px', overflowY: 'auto', padding: '12px' }}>
+              {isSearching ? (
+                <div style={{ padding: '30px', textAlign: 'center', color: '#94a3b8', fontSize: '0.9rem' }}>
+                  Searching essentials...
+                </div>
+              ) : searchResults.length > 0 ? (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {searchResults.map(prod => (
+                    <div
+                      key={prod.id}
+                      onClick={() => {
+                        setIsSearchModalOpen(false);
+                        navigate(`/product/${prod.slug || prod.id}`);
+                      }}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'space-between',
+                        padding: '10px 14px',
+                        borderRadius: '10px',
+                        cursor: 'pointer',
+                        transition: 'background 0.15s ease',
+                        backgroundColor: '#fff'
+                      }}
+                      onMouseEnter={e => e.currentTarget.style.backgroundColor = '#f8fafc'}
+                      onMouseLeave={e => e.currentTarget.style.backgroundColor = '#fff'}
+                    >
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '14px' }}>
+                        <img
+                          src={prod.image}
+                          alt={prod.title}
+                          onError={e => replaceWithFallbackImage(e, prod.id)}
+                          style={{ width: '44px', height: '44px', borderRadius: '8px', objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                        />
+                        <div>
+                          <div style={{ fontWeight: '600', fontSize: '0.92rem', color: '#1e293b' }}>{prod.title}</div>
+                          <div style={{ fontSize: '0.78rem', color: '#64748b', marginTop: '2px' }}>{prod.category || 'Collection'}</div>
+                        </div>
+                      </div>
+                      <div style={{ textAlign: 'right' }}>
+                        <div style={{ fontWeight: '600', fontSize: '0.92rem', color: '#468165' }}>{prod.price}</div>
+                        {prod.stock !== undefined && Number(prod.stock) <= 0 && (
+                          <div style={{ fontSize: '0.72rem', color: '#ef4444' }}>Out of Stock</div>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+
+                  <button
+                    type="button"
+                    onClick={handleSearch}
+                    style={{
+                      marginTop: '8px',
+                      padding: '10px',
+                      backgroundColor: '#f8fafc',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '8px',
+                      textAlign: 'center',
+                      color: '#468165',
+                      fontWeight: '600',
+                      fontSize: '0.85rem',
+                      cursor: 'pointer'
+                    }}
+                  >
+                    View all results for &ldquo;{searchTerm}&rdquo; &rarr;
+                  </button>
+                </div>
+              ) : searchTerm.trim() ? (
+                <div style={{ padding: '30px', textAlign: 'center', color: '#64748b', fontSize: '0.9rem' }}>
+                  No products found for &ldquo;<strong>{searchTerm}</strong>&rdquo;
+                </div>
+              ) : (
+                <div style={{ padding: '24px 16px', textAlign: 'center', color: '#94a3b8' }}>
+                  <p style={{ margin: 0, fontSize: '0.88rem' }}>Type above to search through our full collection of home essentials</p>
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}

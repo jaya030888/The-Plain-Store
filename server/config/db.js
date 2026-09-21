@@ -29,6 +29,16 @@ if (process.env.NODE_ENV === 'production') {
 const pool = new Pool({
   connectionString,
   ssl: needsSsl(connectionString) ? { rejectUnauthorized: false } : false,
+  max: parseInt(process.env.DB_POOL_MAX || '20', 10),
+  idleTimeoutMillis: 30000,
+  connectionTimeoutMillis: 15000,
+  keepAlive: true,
+  keepAliveInitialDelayMillis: 10000,
+  allowExitOnIdle: false
+});
+
+pool.on('error', (err) => {
+  console.error('Unexpected error on idle PostgreSQL client pool:', err.message);
 });
 
 const convertPlaceholders = (sql, params) => {
@@ -62,6 +72,16 @@ const wrapQuery = (executor) => async (sql, params = []) => {
     const result = await executor(pgSql, params);
     return formatResult(result, isInsert, pgSql);
   } catch (err) {
+    if (err.message && (err.message.includes('terminated') || err.message.includes('timeout') || err.message.includes('closed') || err.message.includes('Connection'))) {
+      console.warn('Database query failed with connection issue, retrying once...', err.message);
+      try {
+        const result = await executor(pgSql, params);
+        return formatResult(result, isInsert, pgSql);
+      } catch (retryErr) {
+        console.error('Database Query Error on retry:', retryErr.message);
+        throw retryErr;
+      }
+    }
     console.error('Database Query Error:', err.message);
     throw err;
   }

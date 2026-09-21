@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Edit, Trash2, X, Check, Tag, RotateCcw, PackageCheck, Award, AlertCircle } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Check, Tag, RotateCcw, PackageCheck, Award, AlertCircle, Search } from 'lucide-react';
 import { replaceWithFallbackImage } from '../utils/productImage';
 
 const ProductsManager = () => {
@@ -21,6 +21,10 @@ const ProductsManager = () => {
   const [stockEdits, setStockEdits] = useState({});
   const [savingStockId, setSavingStockId] = useState(null);
   const [savedStockId, setSavedStockId] = useState(null);
+
+  // Search and filter states
+  const [searchQuery, setSearchQuery] = useState('');
+  const [categoryFilter, setCategoryFilter] = useState('all');
 
   // Quick sale modal/dialog state
   const [saleDialogProduct, setSaleDialogProduct] = useState(null);
@@ -214,250 +218,331 @@ const ProductsManager = () => {
 
   return (
     <AdminLayout title="Products Management">
+      {/* Header & Controls Bar */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px', flexWrap: 'wrap', gap: '15px' }}>
         <div>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: '#64748b' }}>
-            Manage your store inventory, edit stock amounts directly inline, and toggle items on/off sale.
+          <h2 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', margin: '0 0 4px 0' }}>Catalog & Inventory</h2>
+          <p style={{ margin: 0, fontSize: '0.85rem', color: '#64748b' }}>
+            {products.length} total products &bull; {products.filter(p => p.isOnSale).length} currently on sale
           </p>
         </div>
         <button 
           onClick={() => handleOpenModal()} 
           style={{ 
-            display: 'flex', 
+            display: 'inline-flex', 
             alignItems: 'center', 
             gap: '8px', 
-            padding: '10px 20px', 
+            padding: '9px 18px', 
             backgroundColor: '#468165', 
             color: '#fff', 
             border: 'none', 
             borderRadius: '6px', 
             cursor: 'pointer', 
-            fontWeight: '600' 
+            fontWeight: '600',
+            fontSize: '0.9rem',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.1)'
           }}
         >
-          <Plus size={18} /> Add New Product
+          <Plus size={16} /> Add Product
         </button>
       </div>
 
+      {/* Filter and Search Toolbar */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '12px',
+        background: '#fff',
+        padding: '12px 16px',
+        borderRadius: '8px',
+        border: '1px solid #e2e8f0',
+        marginBottom: '16px',
+        flexWrap: 'wrap'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: '1 1 300px' }}>
+          {/* Search box */}
+          <div style={{ position: 'relative', width: '100%', maxWidth: '320px' }}>
+            <Search size={15} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#94a3b8' }} />
+            <input
+              type="text"
+              placeholder="Search products by title..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '7px 10px 7px 32px',
+                borderRadius: '6px',
+                border: '1px solid #cbd5e1',
+                fontSize: '0.85rem',
+                outline: 'none'
+              }}
+            />
+          </div>
+
+          {/* Category Dropdown */}
+          <select
+            value={categoryFilter}
+            onChange={(e) => setCategoryFilter(e.target.value)}
+            style={{
+              padding: '7px 12px',
+              borderRadius: '6px',
+              border: '1px solid #cbd5e1',
+              fontSize: '0.85rem',
+              color: '#334155',
+              background: '#fff',
+              cursor: 'pointer'
+            }}
+          >
+            <option value="all">All Categories</option>
+            {categories.map(cat => (
+              <option key={cat.id} value={cat.name}>{cat.name}</option>
+            ))}
+          </select>
+        </div>
+
+        {/* Quick count chips */}
+        <div style={{ display: 'flex', gap: '8px', fontSize: '0.8rem', color: '#64748b' }}>
+          <span style={{ background: '#f8fafc', padding: '4px 10px', borderRadius: '20px', border: '1px solid #e2e8f0' }}>
+            Showing: <strong>{products.filter(p => {
+              const mSearch = !searchQuery.trim() || p.title?.toLowerCase().includes(searchQuery.toLowerCase()) || p.category?.toLowerCase().includes(searchQuery.toLowerCase());
+              const mCat = categoryFilter === 'all' || p.category === categoryFilter;
+              return mSearch && mCat;
+            }).length}</strong>
+          </span>
+        </div>
+      </div>
+
       {loading ? (
-        <p>Loading products...</p>
+        <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Loading products...</div>
       ) : (
-        <div className="admin-table-container">
-          <table className="admin-table">
+        <div className="admin-table-container" style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+          <table className="admin-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
             <thead>
-              <tr>
-                <th style={{ padding: '15px 20px', fontWeight: '600' }}>Product</th>
-                <th style={{ padding: '15px 20px', fontWeight: '600' }}>Category</th>
-                <th style={{ padding: '15px 20px', fontWeight: '600' }}>Price</th>
-                <th style={{ padding: '15px 20px', fontWeight: '600' }}>Sale Status</th>
-                <th style={{ padding: '15px 20px', fontWeight: '600' }}>Badge & Policy</th>
-                <th style={{ padding: '15px 20px', fontWeight: '600', minWidth: '180px' }}>Stock in Inventory</th>
-                <th style={{ padding: '15px 20px', fontWeight: '600' }}>Status</th>
-                <th style={{ padding: '15px 20px', fontWeight: '600', textAlign: 'right' }}>Actions</th>
+              <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
+                <th style={{ padding: '12px 18px', textAlign: 'left', fontWeight: '600', fontSize: '0.82rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Product</th>
+                <th style={{ padding: '12px 18px', textAlign: 'left', fontWeight: '600', fontSize: '0.82rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Price & Sale</th>
+                <th style={{ padding: '12px 18px', textAlign: 'left', fontWeight: '600', fontSize: '0.82rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Stock Inventory</th>
+                <th style={{ padding: '12px 18px', textAlign: 'left', fontWeight: '600', fontSize: '0.82rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Return Policy</th>
+                <th style={{ padding: '12px 18px', textAlign: 'right', fontWeight: '600', fontSize: '0.82rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Actions</th>
               </tr>
             </thead>
             <tbody>
-              {products.map(product => {
-                const currentStockVal = stockEdits[product.id] ?? product.stock;
-                const isStockDirty = parseInt(currentStockVal, 10) !== product.stock;
+              {products
+                .filter(product => {
+                  const mSearch = !searchQuery.trim() || product.title?.toLowerCase().includes(searchQuery.toLowerCase()) || product.category?.toLowerCase().includes(searchQuery.toLowerCase());
+                  const mCat = categoryFilter === 'all' || product.category === categoryFilter;
+                  return mSearch && mCat;
+                })
+                .map(product => {
+                  const currentStockVal = stockEdits[product.id] ?? product.stock;
+                  const isStockDirty = parseInt(currentStockVal, 10) !== product.stock;
 
-                return (
-                  <tr key={product.id} style={{ borderBottom: '1px solid #eee' }}>
-                    {/* Product info */}
-                    <td style={{ padding: '15px 20px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '15px' }}>
-                        <img 
-                          src={product.image} 
-                          alt={product.title} 
-                          style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '6px' }} 
-                          onError={(e) => replaceWithFallbackImage(e, product.id)} 
-                        />
-                        <div>
-                          <div style={{ fontWeight: '600', color: '#1e293b' }}>{product.title}</div>
-                          <div style={{ display: 'flex', gap: '6px', marginTop: '3px' }}>
-                            {product.isFeatured && (
-                              <span style={{ fontSize: '0.7rem', padding: '1px 6px', backgroundColor: '#e6f3ed', color: '#468165', borderRadius: '4px', fontWeight: '500' }}>
-                                Featured
+                  return (
+                    <tr key={product.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background-color 0.15s' }}>
+                      {/* Product details */}
+                      <td style={{ padding: '14px 18px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                          <img 
+                            src={product.image} 
+                            alt={product.title} 
+                            style={{ width: '44px', height: '44px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #e2e8f0', flexShrink: 0 }} 
+                            onError={(e) => replaceWithFallbackImage(e, product.id)} 
+                          />
+                          <div style={{ minWidth: 0 }}>
+                            <div style={{ fontWeight: '600', color: '#0f172a', fontSize: '0.9rem', lineHeight: '1.3' }}>
+                              {product.title}
+                            </div>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginTop: '3px', flexWrap: 'wrap' }}>
+                              <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                {product.category || 'Uncategorized'}
+                              </span>
+                              {product.isFeatured && (
+                                <span style={{ fontSize: '0.68rem', padding: '1px 6px', backgroundColor: '#e6f3ed', color: '#2b7a4b', borderRadius: '4px', fontWeight: '600' }}>
+                                  Featured
+                                </span>
+                              )}
+                              {product.badge && (
+                                <span style={{ fontSize: '0.68rem', padding: '1px 6px', backgroundColor: '#fef3c7', color: '#92400e', borderRadius: '4px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '2px' }}>
+                                  <Award size={10} /> {product.badge}
+                                </span>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      </td>
+
+                      {/* Price & Sale Status */}
+                      <td style={{ padding: '14px 18px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          {product.isOnSale && product.discountPrice ? (
+                            <div style={{ display: 'flex', alignItems: 'baseline', gap: '6px' }}>
+                              <span style={{ fontWeight: '700', fontSize: '0.95rem', color: '#c2410c' }}>{product.discountPrice}</span>
+                              <span style={{ fontSize: '0.8rem', color: '#94a3b8', textDecoration: 'line-through' }}>{product.price}</span>
+                            </div>
+                          ) : (
+                            <span style={{ fontWeight: '600', fontSize: '0.92rem', color: '#1e293b' }}>{product.price}</span>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => handleToggleSale(product)}
+                            title={product.isOnSale ? 'Click to remove from sale' : 'Click to put on sale'}
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '4px',
+                              padding: '2px 8px',
+                              borderRadius: '12px',
+                              fontSize: '0.72rem',
+                              fontWeight: '600',
+                              width: 'fit-content',
+                              border: 'none',
+                              cursor: 'pointer',
+                              backgroundColor: product.isOnSale ? '#fff1f2' : '#f1f5f9',
+                              color: product.isOnSale ? '#be123c' : '#64748b'
+                            }}
+                          >
+                            <Tag size={10} /> {product.isOnSale ? 'On Sale' : '+ Put On Sale'}
+                          </button>
+                        </div>
+                      </td>
+
+                      {/* Stock Inventory */}
+                      <td style={{ padding: '14px 18px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            <input
+                              type="number"
+                              min="0"
+                              value={currentStockVal}
+                              onChange={(e) => {
+                                const val = e.target.value;
+                                setStockEdits(prev => ({ ...prev, [product.id]: val }));
+                              }}
+                              onKeyDown={(e) => {
+                                if (e.key === 'Enter') handleSaveStock(product.id);
+                              }}
+                              style={{
+                                width: '64px',
+                                padding: '4px 8px',
+                                borderRadius: '5px',
+                                border: isStockDirty ? '2px solid #468165' : '1px solid #cbd5e1',
+                                backgroundColor: isStockDirty ? '#f0fdf4' : '#fff',
+                                fontSize: '0.85rem',
+                                fontWeight: '600',
+                                color: '#1e293b'
+                              }}
+                            />
+                            {isStockDirty && (
+                              <button
+                                type="button"
+                                onClick={() => handleSaveStock(product.id)}
+                                disabled={savingStockId === product.id}
+                                style={{
+                                  padding: '4px 8px',
+                                  backgroundColor: '#468165',
+                                  color: '#fff',
+                                  border: 'none',
+                                  borderRadius: '4px',
+                                  cursor: 'pointer',
+                                  fontSize: '0.72rem',
+                                  fontWeight: '600',
+                                  display: 'flex',
+                                  alignItems: 'center',
+                                  gap: '2px'
+                                }}
+                              >
+                                <Check size={12} /> Save
+                              </button>
+                            )}
+                            {savedStockId === product.id && (
+                              <span style={{ fontSize: '0.72rem', color: '#16a34a', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '2px' }}>
+                                <Check size={12} /> Saved
                               </span>
                             )}
-                            {product.isOnSale && (
-                              <span style={{ fontSize: '0.7rem', padding: '1px 6px', backgroundColor: '#F5ECE6', color: '#8F422E', borderRadius: '4px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                                <Tag size={10} /> ON SALE
+                          </div>
+                          <div style={{ fontSize: '0.72rem', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                            {product.stock > 0 ? (
+                              <span style={{ color: '#15803d', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: '500' }}>
+                                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#22c55e', display: 'inline-block' }} />
+                                In Stock
+                              </span>
+                            ) : (
+                              <span style={{ color: '#dc2626', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: '500' }}>
+                                <span style={{ width: 6, height: 6, borderRadius: '50%', backgroundColor: '#ef4444', display: 'inline-block' }} />
+                                Out of Stock
                               </span>
                             )}
                           </div>
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Category */}
-                    <td style={{ padding: '15px 20px', color: '#64748b' }}>
-                      {product.category || 'Uncategorized'}
-                    </td>
-
-                    {/* Price */}
-                    <td style={{ padding: '15px 20px' }}>
-                      {product.isOnSale && product.discountPrice ? (
-                        <div>
-                          <span style={{ fontWeight: '700', color: '#8F422E' }}>{product.discountPrice}</span>
-                          <span style={{ marginLeft: '6px', fontSize: '0.85rem', color: '#94a3b8', textDecoration: 'line-through' }}>
-                            {product.price}
-                          </span>
-                        </div>
-                      ) : (
-                        <span style={{ fontWeight: '600', color: '#334155' }}>{product.price}</span>
-                      )}
-                    </td>
-
-                    {/* Sale Toggle Button */}
-                    <td style={{ padding: '15px 20px' }}>
-                      <button
-                        type="button"
-                        onClick={() => handleToggleSale(product)}
-                        title={product.isOnSale ? 'Click to remove from sale' : 'Click to put on sale'}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '5px',
-                          padding: '6px 12px',
-                          borderRadius: '20px',
-                          fontSize: '0.78rem',
-                          fontWeight: '600',
-                          border: 'none',
-                          cursor: 'pointer',
-                          transition: 'all 0.2s ease',
-                          backgroundColor: product.isOnSale ? '#F5ECE6' : '#f1f5f9',
-                          color: product.isOnSale ? '#8F422E' : '#64748b',
-                          boxShadow: product.isOnSale ? '0 0 0 1px #E5D5CB' : '0 0 0 1px #e2e8f0'
-                        }}
-                      >
-                        <Tag size={13} color={product.isOnSale ? '#8F422E' : '#94a3b8'} />
-                        {product.isOnSale ? 'On Sale (Click to Stop)' : '+ Put On Sale'}
-                      </button>
-                    </td>
-
-                    {/* Badge & Policy */}
-                    <td style={{ padding: '15px 20px' }}>
-                      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-                        {product.badge && (
-                          <span style={{ fontSize: '0.72rem', padding: '2px 8px', backgroundColor: '#fef3c7', color: '#92400e', borderRadius: '12px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '4px', width: 'fit-content' }}>
-                            <Award size={12} /> {product.badge}
-                          </span>
-                        )}
-                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                      {/* Return Policy */}
+                      <td style={{ padding: '14px 18px' }}>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                           {product.isReturnable === false || product.is_returnable === false ? (
-                            <span style={{ fontSize: '0.72rem', padding: '2px 8px', backgroundColor: '#fee2e2', color: '#b91c1c', borderRadius: '12px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                              <AlertCircle size={11} /> Non-Returnable
+                            <span style={{ fontSize: '0.75rem', color: '#b91c1c', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: '500' }}>
+                              <AlertCircle size={12} /> Non-Returnable
                             </span>
                           ) : (
-                            <span style={{ fontSize: '0.72rem', padding: '2px 8px', backgroundColor: '#e6f3ed', color: '#2b7a4b', borderRadius: '12px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                              <RotateCcw size={11} /> {product.returnWindowDays || product.return_window_days || 7}d Returnable
+                            <span style={{ fontSize: '0.75rem', color: '#2b7a4b', display: 'inline-flex', alignItems: 'center', gap: '4px', fontWeight: '500' }}>
+                              <RotateCcw size={12} /> {product.returnWindowDays || product.return_window_days || 7}d Returnable
                             </span>
                           )}
                           {(product.isOpenBoxDelivery || product.is_open_box_delivery) && (
-                            <span style={{ fontSize: '0.72rem', padding: '2px 8px', backgroundColor: '#e0f2fe', color: '#0369a1', borderRadius: '12px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
-                              <PackageCheck size={11} /> Open Box
+                            <span style={{ fontSize: '0.72rem', color: '#0369a1', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                              <PackageCheck size={12} /> Open Box Delivery
                             </span>
                           )}
                         </div>
-                      </div>
-                    </td>
+                      </td>
 
-                    {/* Inline Stock Editor */}
-                    <td style={{ padding: '15px 20px' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <input
-                          type="number"
-                          min="0"
-                          value={currentStockVal}
-                          onChange={(e) => {
-                            const val = e.target.value;
-                            setStockEdits(prev => ({ ...prev, [product.id]: val }));
-                          }}
-                          onKeyDown={(e) => {
-                            if (e.key === 'Enter') handleSaveStock(product.id);
-                          }}
-                          style={{
-                            width: '80px',
-                            padding: '6px 10px',
-                            borderRadius: '6px',
-                            border: isStockDirty ? '2px solid #468165' : '1px solid #cbd5e1',
-                            backgroundColor: isStockDirty ? '#f0fdf4' : '#fff',
-                            fontSize: '0.9rem',
-                            fontWeight: '600',
-                            color: '#1e293b'
-                          }}
-                        />
-
-                        {/* Save Stock Button (shown when edited or saving) */}
-                        {isStockDirty && (
-                          <button
-                            type="button"
-                            onClick={() => handleSaveStock(product.id)}
-                            disabled={savingStockId === product.id}
-                            style={{
-                              padding: '6px 10px',
-                              backgroundColor: '#468165',
-                              color: '#fff',
-                              border: 'none',
-                              borderRadius: '6px',
-                              cursor: 'pointer',
-                              fontSize: '0.75rem',
-                              fontWeight: '600',
-                              display: 'flex',
+                      {/* Action buttons */}
+                      <td style={{ padding: '14px 18px', textAlign: 'right' }}>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+                          <button 
+                            onClick={() => handleOpenModal(product)} 
+                            title="Edit Product"
+                            style={{ 
+                              width: '32px', 
+                              height: '32px', 
+                              borderRadius: '6px', 
+                              border: '1px solid #e2e8f0', 
+                              background: '#fff', 
+                              cursor: 'pointer', 
+                              color: '#334155',
+                              display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '4px'
+                              justifyContent: 'center',
+                              transition: 'all 0.15s ease'
                             }}
                           >
-                            <Check size={14} /> Save
+                            <Edit size={14} />
                           </button>
-                        )}
-
-                        {savedStockId === product.id && (
-                          <span style={{ fontSize: '0.75rem', color: '#16a34a', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '2px' }}>
-                            <Check size={14} /> Saved!
-                          </span>
-                        )}
-                      </div>
-                    </td>
-
-                    {/* Stock Status */}
-                    <td style={{ padding: '15px 20px' }}>
-                      <span 
-                        style={{ 
-                          fontSize: '0.8rem', 
-                          padding: '4px 10px', 
-                          backgroundColor: product.stock > 0 ? '#e6f3ed' : '#F5ECE6', 
-                          color: product.stock > 0 ? '#468165' : '#8F422E', 
-                          borderRadius: '20px',
-                          fontWeight: '600',
-                          display: 'inline-block'
-                        }}
-                      >
-                        {product.stock > 0 ? `${product.stock} In Stock` : 'Out of Stock'}
-                      </span>
-                    </td>
-
-                    {/* Action buttons */}
-                    <td style={{ padding: '15px 20px', textAlign: 'right' }}>
-                      <button 
-                        onClick={() => handleOpenModal(product)} 
-                        title="Edit Full Details"
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#475569', marginRight: '10px' }}
-                      >
-                        <Edit size={18} />
-                      </button>
-                      <button 
-                        onClick={() => handleDelete(product.id)} 
-                        title="Delete Product"
-                        style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#e03a3a' }}
-                      >
-                        <Trash2 size={18} />
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                          <button 
+                            onClick={() => handleDelete(product.id)} 
+                            title="Delete Product"
+                            style={{ 
+                              width: '32px', 
+                              height: '32px', 
+                              borderRadius: '6px', 
+                              border: '1px solid #fee2e2', 
+                              background: '#fff5f5', 
+                              cursor: 'pointer', 
+                              color: '#dc2626',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              transition: 'all 0.15s ease'
+                            }}
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
             </tbody>
           </table>
         </div>
@@ -580,190 +665,180 @@ const ProductsManager = () => {
                 </select>
               </div>
 
-              {/* Product Badge / Label */}
-              <div style={{ padding: '14px', backgroundColor: '#fdfbf7', borderRadius: '8px', border: '1px solid #ebd9c8' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '0.9rem', color: '#8F422E', marginBottom: '8px' }}>
-                  <Award size={16} /> Product Badge / Label (Shown on storefront cards)
-                </label>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
-                  {['', 'Best Seller', 'New Arrival', 'Trending', 'Top Rated', 'Handmade', 'Limited Edition'].map((badgeOption) => (
-                    <button
-                      key={badgeOption || 'none'}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, badge: badgeOption })}
-                      style={{
-                        padding: '4px 10px',
-                        borderRadius: '16px',
-                        fontSize: '0.78rem',
-                        fontWeight: '600',
-                        cursor: 'pointer',
-                        border: formData.badge === badgeOption ? '2px solid #8F422E' : '1px solid #cbd5e1',
-                        backgroundColor: formData.badge === badgeOption ? '#8F422E' : '#fff',
-                        color: formData.badge === badgeOption ? '#fff' : '#475569'
-                      }}
-                    >
-                      {badgeOption || 'None (No Badge)'}
-                    </button>
-                  ))}
-                </div>
-                <input
-                  type="text"
-                  placeholder="Or enter custom badge text (e.g. Eco Friendly, Staff Pick)"
-                  value={formData.badge || ''}
-                  onChange={e => setFormData({ ...formData, badge: e.target.value })}
-                  style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.88rem' }}
-                />
-              </div>
-
-              {/* Return Policy & Refund Window Settings */}
-              <div style={{ padding: '14px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '0.9rem', color: '#1e293b', marginBottom: '10px' }}>
-                  <RotateCcw size={16} color="#468165" /> Return & Refund Policy Declaration
-                </label>
-
-                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
-                  <label 
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '8px', 
-                      padding: '10px 14px', 
-                      borderRadius: '6px', 
-                      border: formData.is_returnable ? '2px solid #468165' : '1px solid #cbd5e1',
-                      backgroundColor: formData.is_returnable ? '#e6f3ed' : '#fff',
-                      cursor: 'pointer',
-                      fontWeight: '500',
-                      fontSize: '0.85rem'
-                    }}
-                  >
-                    <input 
-                      type="radio" 
-                      name="returnable_choice"
-                      checked={Boolean(formData.is_returnable)} 
-                      onChange={() => setFormData({ ...formData, is_returnable: true })} 
-                    />
-                    <span><strong>Returnable & Refundable</strong></span>
-                  </label>
-
-                  <label 
-                    style={{ 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      gap: '8px', 
-                      padding: '10px 14px', 
-                      borderRadius: '6px', 
-                      border: !formData.is_returnable ? '2px solid #dc2626' : '1px solid #cbd5e1',
-                      backgroundColor: !formData.is_returnable ? '#fee2e2' : '#fff',
-                      cursor: 'pointer',
-                      fontWeight: '500',
-                      fontSize: '0.85rem'
-                    }}
-                  >
-                    <input 
-                      type="radio" 
-                      name="returnable_choice"
-                      checked={!formData.is_returnable} 
-                      onChange={() => setFormData({ ...formData, is_returnable: false })} 
-                    />
-                    <span><strong>Non-Returnable (Final Sale)</strong></span>
-                  </label>
-                </div>
-
-                {/* Return Window Days (only shown if Returnable) */}
-                {formData.is_returnable ? (
-                  <div style={{ marginTop: '8px', padding: '10px', backgroundColor: '#fff', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
-                      Return Window (Days customer has to initiate return):
+              {/* Merchandising & Policy Settings */}
+              <div style={{ borderTop: '1px solid #e2e8f0', paddingTop: '15px', marginTop: '5px' }}>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
+                  {/* Badge Selection */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '500', fontSize: '0.85rem', marginBottom: '5px', color: '#1e293b' }}>
+                      <Award size={15} color="#8F422E" /> Storefront Badge
                     </label>
-                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                      {[7, 10, 14, 30].map(days => (
-                        <button
-                          key={days}
-                          type="button"
-                          onClick={() => setFormData({ ...formData, return_window_days: days })}
-                          style={{
-                            padding: '5px 12px',
-                            borderRadius: '4px',
-                            fontSize: '0.82rem',
-                            fontWeight: '600',
-                            cursor: 'pointer',
-                            border: Number(formData.return_window_days) === days ? '2px solid #468165' : '1px solid #cbd5e1',
-                            backgroundColor: Number(formData.return_window_days) === days ? '#468165' : '#f8fafc',
-                            color: Number(formData.return_window_days) === days ? '#fff' : '#475569'
-                          }}
-                        >
-                          {days} Days
-                        </button>
-                      ))}
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '8px' }}>
-                        <span style={{ fontSize: '0.82rem', color: '#64748b' }}>Custom:</span>
+                    <select
+                      value={['', 'Best Seller', 'New Arrival', 'Trending', 'Top Rated', 'Handmade', 'Limited Edition'].includes(formData.badge || '') ? (formData.badge || '') : '__custom__'}
+                      onChange={e => {
+                        if (e.target.value === '__custom__') {
+                          setFormData({ ...formData, badge: formData.badge || 'Staff Pick' });
+                        } else {
+                          setFormData({ ...formData, badge: e.target.value });
+                        }
+                      }}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.88rem', backgroundColor: '#fff' }}
+                    >
+                      <option value="">None (No Badge)</option>
+                      <option value="Best Seller">Best Seller</option>
+                      <option value="New Arrival">New Arrival</option>
+                      <option value="Trending">Trending</option>
+                      <option value="Top Rated">Top Rated</option>
+                      <option value="Handmade">Handmade</option>
+                      <option value="Limited Edition">Limited Edition</option>
+                      <option value="__custom__">Custom Badge Text...</option>
+                    </select>
+                    {!['', 'Best Seller', 'New Arrival', 'Trending', 'Top Rated', 'Handmade', 'Limited Edition'].includes(formData.badge || '') && (
+                      <input
+                        type="text"
+                        placeholder="Enter custom badge text"
+                        value={formData.badge || ''}
+                        onChange={e => setFormData({ ...formData, badge: e.target.value })}
+                        style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem', marginTop: '6px' }}
+                      />
+                    )}
+                  </div>
+
+                  {/* Return Policy Selection */}
+                  <div>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '5px', fontWeight: '500', fontSize: '0.85rem', marginBottom: '5px', color: '#1e293b' }}>
+                      <RotateCcw size={15} color="#468165" /> Return & Refund Policy
+                    </label>
+                    <select
+                      value={!formData.is_returnable ? '0' : ([7, 10, 14, 30].includes(Number(formData.return_window_days)) ? String(formData.return_window_days) : '__custom__')}
+                      onChange={e => {
+                        const val = e.target.value;
+                        if (val === '0') {
+                          setFormData({ ...formData, is_returnable: false });
+                        } else if (val === '__custom__') {
+                          setFormData({ ...formData, is_returnable: true, return_window_days: formData.return_window_days || 15 });
+                        } else {
+                          setFormData({ ...formData, is_returnable: true, return_window_days: Number(val) });
+                        }
+                      }}
+                      style={{ width: '100%', padding: '9px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.88rem', backgroundColor: '#fff' }}
+                    >
+                      <option value="7">Returnable (7 Days Standard)</option>
+                      <option value="10">Returnable (10 Days)</option>
+                      <option value="14">Returnable (14 Days)</option>
+                      <option value="30">Returnable (30 Days)</option>
+                      <option value="__custom__">Custom Return Days...</option>
+                      <option value="0">Non-Returnable (Final Sale)</option>
+                    </select>
+                    {formData.is_returnable && ![7, 10, 14, 30].includes(Number(formData.return_window_days)) && (
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '6px' }}>
                         <input
                           type="number"
                           min="1"
                           max="90"
                           value={formData.return_window_days || ''}
                           onChange={e => setFormData({ ...formData, return_window_days: e.target.value })}
-                          style={{ width: '60px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
+                          placeholder="Days"
+                          style={{ width: '80px', padding: '7px 10px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
                         />
-                        <span style={{ fontSize: '0.82rem', color: '#64748b' }}>days</span>
+                        <span style={{ fontSize: '0.82rem', color: '#64748b' }}>days return window</span>
                       </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Modern Compact Feature Toggles */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '10px', marginTop: '10px' }}>
+                  <label style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '8px',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: formData.is_on_sale ? '1.5px solid #8F422E' : '1px solid #e2e8f0',
+                    backgroundColor: formData.is_on_sale ? '#fff7f5' : '#f8fafc',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(formData.is_on_sale)}
+                      onChange={e => setFormData({ ...formData, is_on_sale: e.target.checked })}
+                      style={{ marginTop: '2px' }}
+                    />
+                    <div>
+                      <div style={{ fontSize: '0.82rem', fontWeight: '600', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <Tag size={13} color="#8F422E" /> Put On Sale
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '1px' }}>Include in sale section</div>
                     </div>
-                  </div>
-                ) : (
-                  <p style={{ margin: '6px 0 0 0', fontSize: '0.8rem', color: '#dc2626' }}>
-                    <AlertCircle size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
-                    This product will be declared as Non-Returnable on the storefront product page and cannot be returned by buyers.
-                  </p>
-                )}
+                  </label>
+
+                  <label style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '8px',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: formData.is_featured ? '1.5px solid #468165' : '1px solid #e2e8f0',
+                    backgroundColor: formData.is_featured ? '#f0fdf4' : '#f8fafc',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(formData.is_featured)}
+                      onChange={e => setFormData({ ...formData, is_featured: e.target.checked })}
+                      style={{ marginTop: '2px' }}
+                    />
+                    <div>
+                      <div style={{ fontSize: '0.82rem', fontWeight: '600', color: '#1e293b' }}>Featured Product</div>
+                      <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '1px' }}>Showcase on homepage</div>
+                    </div>
+                  </label>
+
+                  <label style={{
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    gap: '8px',
+                    padding: '10px 12px',
+                    borderRadius: '8px',
+                    border: formData.is_open_box_delivery ? '1.5px solid #0284c7' : '1px solid #e2e8f0',
+                    backgroundColor: formData.is_open_box_delivery ? '#f0f9ff' : '#f8fafc',
+                    cursor: 'pointer',
+                    transition: 'all 0.15s ease'
+                  }}>
+                    <input
+                      type="checkbox"
+                      checked={Boolean(formData.is_open_box_delivery)}
+                      onChange={e => setFormData({ ...formData, is_open_box_delivery: e.target.checked })}
+                      style={{ marginTop: '2px' }}
+                    />
+                    <div>
+                      <div style={{ fontSize: '0.82rem', fontWeight: '600', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                        <PackageCheck size={13} color="#0284c7" /> Open Box
+                      </div>
+                      <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '1px' }}>Customer inspects on delivery</div>
+                    </div>
+                  </label>
+                </div>
               </div>
 
-              {/* Delivery Features (Open Box Delivery) */}
-              <div style={{ padding: '14px', backgroundColor: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd' }}>
-                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontWeight: '500', color: '#0369a1' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={Boolean(formData.is_open_box_delivery)} 
-                    onChange={e => setFormData({ ...formData, is_open_box_delivery: e.target.checked })} 
-                    style={{ marginTop: '3px' }}
-                  />
-                  <div>
-                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', fontSize: '0.9rem' }}>
-                      <PackageCheck size={16} /> Open Box Delivery Available
-                    </span>
-                    <span style={{ display: 'block', fontSize: '0.8rem', color: '#0c4a6e', marginTop: '2px' }}>
-                      Delivery partner will open package in presence of customer for physical inspection before delivery acceptance.
-                    </span>
-                  </div>
-                </label>
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '10px', marginTop: '15px', paddingTop: '15px', borderTop: '1px solid #e2e8f0' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowModal(false)}
+                  style={{ padding: '10px 18px', backgroundColor: '#f1f5f9', color: '#475569', border: 'none', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '0.9rem' }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  style={{ padding: '10px 22px', backgroundColor: '#468165', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '600', cursor: 'pointer', fontSize: '0.9rem' }}
+                >
+                  {editingId ? 'Save Product Changes' : 'Create Product'}
+                </button>
               </div>
-
-              {/* Checkbox Options */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
-                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontWeight: '500', color: '#1e293b' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={formData.is_on_sale} 
-                    onChange={e => setFormData({ ...formData, is_on_sale: e.target.checked })} 
-                  />
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                    <Tag size={15} color="#8F422E" />
-                    <strong>Put On Sale</strong> (Highlights product with SALE badge & includes in Sale Banners)
-                  </span>
-                </label>
-
-                <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontWeight: '500', color: '#1e293b' }}>
-                  <input 
-                    type="checkbox" 
-                    checked={formData.is_featured} 
-                    onChange={e => setFormData({ ...formData, is_featured: e.target.checked })} 
-                  />
-                  <span>Mark as Featured Product (Highlights in Hero & Featured carousel)</span>
-                </label>
-              </div>
-
-              <button type="submit" style={{ padding: '12px', backgroundColor: '#468165', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 'bold', cursor: 'pointer', marginTop: '10px', fontSize: '1rem' }}>
-                {editingId ? 'Save Product Changes' : 'Create Product'}
-              </button>
             </form>
           </div>
         </div>

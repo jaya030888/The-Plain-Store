@@ -37,7 +37,8 @@ CREATE TABLE IF NOT EXISTS addresses (
   city VARCHAR(100) NOT NULL,
   state VARCHAR(100) NOT NULL,
   pincode VARCHAR(20) NOT NULL,
-  is_default BOOLEAN DEFAULT FALSE
+  is_default BOOLEAN DEFAULT FALSE,
+  is_deleted BOOLEAN DEFAULT FALSE
 );
 
 CREATE TABLE IF NOT EXISTS categories (
@@ -144,6 +145,12 @@ CREATE TABLE IF NOT EXISTS wishlist_items (
 const compatibilitySql = `
 ALTER TABLE orders ALTER COLUMN user_id DROP NOT NULL;
 ALTER TABLE addresses ALTER COLUMN user_id DROP NOT NULL;
+ALTER TABLE addresses ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
+UPDATE orders
+SET tracking_number = 'TPS-TRK-' || id || LPAD(FLOOR(RANDOM() * 10000)::text, 4, '0'),
+    carrier = COALESCE(NULLIF(carrier, ''), 'Standard Shipping'),
+    estimated_delivery = COALESCE(estimated_delivery, (created_at + INTERVAL '5 days')::date)
+WHERE tracking_number IS NULL OR tracking_number = '';
 `;
 
 const seedSql = `
