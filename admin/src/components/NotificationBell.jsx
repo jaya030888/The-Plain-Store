@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Bell, Heart, Trash2, X, RefreshCw } from 'lucide-react';
+import { Bell, Heart, Trash2, X } from 'lucide-react';
 import { useAuth } from '../context/AuthContext';
 
 const formatTimeAgo = (dateString) => {
@@ -360,39 +360,6 @@ const NotificationBell = () => {
                 </div>
               ))
             )}
-          </div>
-
-          {/* Footer */}
-          <div
-            style={{
-              padding: '10px 16px',
-              backgroundColor: '#fafaf9',
-              borderTop: '1px solid #e5e7eb',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              fontSize: '0.75rem',
-              color: '#64748b'
-            }}
-          >
-            <span>Live Sync Active</span>
-            <button
-              type="button"
-              onClick={fetchNotifications}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: '#468165',
-                cursor: 'pointer',
-                display: 'flex',
-                alignItems: 'center',
-                gap: '4px',
-                fontWeight: '600',
-                fontSize: '0.75rem'
-              }}
-            >
-              <RefreshCw size={12} /> Refresh
-            </button>
           </div>
         </div>
       )}

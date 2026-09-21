@@ -62,7 +62,7 @@ button {
 .page-container {
   max-width: 1200px;
   margin: 0 auto;
-  padding: 120px 20px 80px; /* Base padding with room for navbar */
+  padding: 140px 20px 80px; /* Base padding with room for top banner & navbar */
   width: 100%;
 }
 
@@ -80,12 +80,13 @@ button {
 
 /* --- Authentication UI --- */
 .auth-container {
-  min-height: calc(100vh - 80px); /* Full height minus navbar */
+  min-height: 100vh;
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 40px 20px;
+  padding: 140px 20px 60px;
   background-color: var(--color-bg);
+  box-sizing: border-box;
 }
 
 .auth-card {
