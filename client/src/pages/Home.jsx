@@ -2,7 +2,6 @@ import React, { useEffect, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import HeroProductSlider from '../components/HeroProductSlider';
 import ProductList from '../components/ProductList';
-import SaleBanner from '../components/SaleBanner';
 import { API_URL } from '../utils/api';
 
 const asProductArray = (payload) => Array.isArray(payload) ? payload : payload?.products || [];
@@ -122,13 +121,6 @@ const Home = () => {
     <main>
       {featuredProducts.length > 0 && !searchQuery && activeCategory === 'all' && (
         <HeroProductSlider products={featuredProducts} />
-      )}
-
-      {/* Seasonal Sale Banner */}
-      {!searchQuery && (
-        <div style={{ marginTop: (featuredProducts.length > 0 && activeCategory === 'all') ? '40px' : '20px' }}>
-          <SaleBanner onShopSale={handleShopSale} saleCount={products.filter(p => p.isOnSale).length} />
-        </div>
       )}
 
       <section 

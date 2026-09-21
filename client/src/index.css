@@ -135,14 +135,113 @@ button {
 
 /* --- Components --- */
 
-/* Navbar */
-.navbar {
+/* Header & Top Banner */
+.site-header {
   position: fixed;
   top: 0;
   left: 0;
   width: 100%;
-  height: 76px;
   z-index: 1000;
+  transition: all var(--transition-normal);
+}
+
+.top-sale-banner {
+  width: 100%;
+  background-color: #f8f6f1;
+  border-bottom: 1px solid #e7e2d7;
+  padding: 7px 20px;
+}
+
+.top-sale-banner-container {
+  max-width: 1200px;
+  margin: 0 auto;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.top-sale-left {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.top-sale-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background-color: #e7f0eb;
+  color: #2e5b44;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.4px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.top-sale-text {
+  font-size: 13px;
+  color: #333333;
+}
+
+.top-sale-code {
+  color: #2e5b44;
+  letter-spacing: 0.5px;
+}
+
+.top-sale-right {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.top-sale-copy-btn {
+  background-color: #ffffff;
+  color: #333333;
+  border: 1px solid #d5cfc2;
+  border-radius: 6px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  transition: all var(--transition-fast);
+}
+
+.top-sale-copy-btn:hover {
+  border-color: #468165;
+  color: #468165;
+}
+
+.top-sale-shop-btn {
+  background: transparent;
+  color: #2e5b44;
+  border: none;
+  padding: 4px 8px;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  transition: all var(--transition-fast);
+}
+
+.top-sale-shop-btn:hover {
+  color: #1b3829;
+}
+
+/* Navbar */
+.navbar {
+  width: 100%;
+  height: 70px;
   background-color: rgba(245, 241, 231, 0.95);
   backdrop-filter: blur(10px);
   -webkit-backdrop-filter: blur(10px);
@@ -185,25 +284,29 @@ button {
 .nav-brand-area {
   display: flex;
   align-items: center;
-  min-width: 0;
-  flex: 1 1 auto;
+  flex: 0 0 auto;
 }
 
 .nav-desktop-links {
   display: flex;
   align-items: center;
-  gap: 8px;
-  margin-left: clamp(14px, 2vw, 30px);
+  justify-content: center;
+  gap: 6px;
+  flex: 1 1 auto;
 }
 
 .nav-desktop-link {
-  font-size: 0.95rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.92rem;
   font-weight: 500;
   color: var(--color-text);
   text-decoration: none;
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
   white-space: nowrap;
+  line-height: 1;
   transition: all var(--transition-fast);
 }
 
@@ -228,7 +331,7 @@ button {
 .nav-dropdown-trigger {
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
   background: none;
   border: none;
   cursor: pointer;
@@ -345,7 +448,7 @@ button {
 
 .nav-actions {
   display: flex;
-  gap: clamp(8px, 1.2vw, 16px);
+  gap: 8px;
   align-items: center;
   justify-content: flex-end;
   flex: 0 0 auto;
@@ -353,11 +456,16 @@ button {
 }
 
 .nav-user-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   font-size: 0.92rem;
   font-weight: 500;
   color: var(--color-text);
-  padding: 6px 12px;
-  border-radius: 6px;
+  padding: 8px 14px;
+  border-radius: 8px;
+  line-height: 1;
+  text-decoration: none;
   transition: all var(--transition-fast);
 }
 
@@ -375,14 +483,16 @@ button {
   border: none;
   color: var(--color-text);
   cursor: pointer;
-  padding: 6px;
-  border-radius: 6px;
-  transition: color var(--transition-fast), transform var(--transition-fast);
+  width: 38px;
+  height: 38px;
+  padding: 0;
+  border-radius: 8px;
+  transition: all var(--transition-fast);
 }
 
 .nav-icon-link:hover {
   color: var(--color-primary);
-  transform: scale(1.06);
+  background-color: rgba(70, 129, 101, 0.08);
 }
 
 .nav-menu-btn,
@@ -403,7 +513,7 @@ button {
 
 .h-stable-header {
   position: absolute;
-  top: 100px; /* Below navbar */
+  top: 125px; /* Below top announcement banner & navbar */
   left: 0;
   width: 100%;
   text-align: center;
@@ -429,7 +539,7 @@ button {
   position: relative;
   flex-grow: 1;
   width: 100%;
-  margin-top: 80px; /* Space for the navbar */
+  margin-top: 110px; /* Space for the top banner & navbar */
 }
 
 .h-slide {
@@ -766,7 +876,7 @@ button {
   padding: 40px 20px;
 }
 
-.shop-section-without-hero { padding-top: 120px; }
+.shop-section-without-hero { padding-top: 140px; }
 .product-listing { min-width: 0; }
 
 .shop-toolbar {
@@ -806,7 +916,7 @@ button {
 
 /* --- Product Details Page --- */
 .pd-container {
-  padding: 120px 20px 80px;
+  padding: 140px 20px 80px;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -934,18 +1044,20 @@ button {
 
 .cart-badge {
   position: absolute;
-  top: -5px;
-  right: -5px;
+  top: 1px;
+  right: 1px;
   background-color: var(--color-primary);
   color: #FFFFFF;
-  font-size: 0.72rem;
+  font-size: 0.68rem;
   font-weight: 700;
   border-radius: 50%;
-  width: 19px;
-  height: 19px;
+  min-width: 18px;
+  height: 18px;
+  padding: 0 4px;
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: 0 0 0 2px var(--color-bg, #F5F1E7);
 }
 
 .modal-overlay {

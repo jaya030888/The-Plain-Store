@@ -1,16 +1,19 @@
 import React, { useEffect, useState } from 'react';
-import { useParams, useNavigate, Link } from 'react-router-dom';
+import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
 import { ArrowLeft, ShoppingBag, Heart, ShieldCheck, Truck, RefreshCw, CheckCircle2, AlertCircle, ExternalLink, Award, PackageCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
+import { useAuth } from '../context/AuthContext';
 import { replaceWithFallbackImage } from '../utils/productImage';
 import { API_URL } from '../utils/api';
 
 const ProductDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
+  const location = useLocation();
   const { addToCart, setIsCartOpen } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { user } = useAuth();
   
   const [product, setProduct] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -27,7 +30,7 @@ const ProductDetails = () => {
           setSelectedImage(data.image);
         }
       } catch (error) {
-        console.error('Failed to fetch product', error);
+        console.error('Failed to load product details:', error);
       } finally {
         setLoading(false);
       }
@@ -38,26 +41,45 @@ const ProductDetails = () => {
   const isWished = product ? isInWishlist(product.id) : false;
 
   if (loading) {
-    return <div style={{ padding: '150px 20px', textAlign: 'center' }}>Loading product...</div>;
+    return (
+      <div className="pd-container" style={{ minHeight: '60vh', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <p>Loading curated product details...</p>
+      </div>
+    );
   }
 
   if (!product) {
     return (
-      <div className="product-details-container" style={{ padding: '150px 20px', textAlign: 'center' }}>
+      <div className="pd-container" style={{ minHeight: '60vh', textAlign: 'center', padding: '4rem 2rem' }}>
         <h2>Product Not Found</h2>
-        <button className="btn-primary" onClick={() => navigate('/')} style={{ marginTop: '20px' }}>
-          Return Home
+        <p style={{ color: '#666', marginTop: '8px' }}>We couldn't find the product you're looking for.</p>
+        <button 
+          className="btn-primary" 
+          style={{ marginTop: '20px' }}
+          onClick={() => navigate('/')}
+        >
+          Back to Store
         </button>
       </div>
     );
   }
 
-  const handleAddToCart = () => {
-    addToCart(product);
-    setIsCartOpen(true);
+  const handleAddToCart = async () => {
+    if (!user) {
+      navigate('/login', { state: { from: location, message: 'Please log in to add items to your cart.' } });
+      return;
+    }
+    const success = await addToCart(product);
+    if (success) {
+      setIsCartOpen(true);
+    }
   };
 
   const handleToggleWishlist = () => {
+    if (!user) {
+      navigate('/login', { state: { from: location, message: 'Please log in to add items to your wishlist.' } });
+      return;
+    }
     toggleWishlist(product);
   };
 

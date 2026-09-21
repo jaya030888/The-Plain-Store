@@ -21,11 +21,14 @@ const writeLocalWishlist = (items) => {
 };
 
 export const WishlistProvider = ({ children }) => {
-  const [wishlistItems, setWishlistItems] = useState(readLocalWishlist);
+  const [wishlistItems, setWishlistItems] = useState([]);
   const { user, token } = useAuth();
 
   const fetchWishlist = async () => {
-    if (!token) return;
+    if (!token || !user) {
+      setWishlistItems([]);
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}/api/wishlist`, {
         headers: { Authorization: `Bearer ${token}` }
@@ -34,72 +37,23 @@ export const WishlistProvider = ({ children }) => {
         throw new Error('Failed to fetch wishlist');
       }
       const data = await res.json();
-      setWishlistItems(data);
+      setWishlistItems(Array.isArray(data) ? data : []);
     } catch (error) {
       console.error('Failed to fetch wishlist:', error);
     }
   };
 
-  const mergeLocalWishlistThenFetch = async () => {
-    const localItems = readLocalWishlist();
-    try {
-      const res = await fetch(`${API_URL}/api/wishlist`, {
-        headers: { Authorization: `Bearer ${token}` }
-      });
-      if (!res.ok) {
-        throw new Error('Failed to fetch wishlist');
-      }
-      const serverItems = await res.json();
-      const serverIds = new Set(serverItems.map((item) => item.id));
-
-      for (const item of localItems) {
-        if (!serverIds.has(item.id)) {
-          await fetch(`${API_URL}/api/wishlist/toggle`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${token}`
-            },
-            body: JSON.stringify({ productId: item.id })
-          });
-        }
-      }
-      localStorage.removeItem(LOCAL_WISHLIST_KEY);
-      await fetchWishlist();
-    } catch (error) {
-      console.error('Failed to merge wishlist:', error);
-      await fetchWishlist();
-    }
-  };
-
   useEffect(() => {
     if (user && token) {
-      mergeLocalWishlistThenFetch();
+      fetchWishlist();
     } else {
-      setWishlistItems(readLocalWishlist());
+      setWishlistItems([]);
     }
   }, [user, token]);
 
   const toggleWishlist = async (product) => {
-    if (!token) {
-      const exists = wishlistItems.find((item) => item.id === product.id);
-      setWishlistItems((prev) => {
-        const next = exists
-          ? prev.filter((item) => item.id !== product.id)
-          : [...prev, product];
-        writeLocalWishlist(next);
-        return next;
-      });
-
-      // If user is adding to wishlist (not removing), notify admin backend
-      if (!exists) {
-        fetch(`${API_URL}/api/wishlist/guest-notify`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ productId: product.id })
-        }).catch((err) => console.warn('Guest wishlist notify failed:', err));
-      }
-      return;
+    if (!user || !token) {
+      return false;
     }
 
     const exists = wishlistItems.find((item) => item.id === product.id);
@@ -119,11 +73,13 @@ export const WishlistProvider = ({ children }) => {
         body: JSON.stringify({ productId: product.id })
       });
       if (!res.ok) {
-        fetchWishlist();
+        await fetchWishlist();
       }
+      return true;
     } catch (error) {
       console.error('Error toggling wishlist:', error);
-      fetchWishlist();
+      await fetchWishlist();
+      return false;
     }
   };
 

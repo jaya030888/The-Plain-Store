@@ -6,6 +6,7 @@ import { useWishlist } from '../context/WishlistContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { API_URL } from '../utils/api';
 import { replaceWithFallbackImage } from '../utils/productImage';
+import SaleBanner from './SaleBanner';
 
 const DEFAULT_CATEGORIES = [
   { id: 1, name: 'Home Decor', slug: 'home-decor' },
@@ -147,68 +148,70 @@ const Navbar = () => {
 
   return (
     <>
-      <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
-        <div className="navbar-container">
-          {/* Left: Brand Logo */}
-          <div className="nav-brand-area">
-            <Link to="/" className="nav-logo-link" aria-label="The Plain Store home">
-              <div className="nav-logo">The Plain Store</div>
-            </Link>
-            
-            {/* Desktop Navigation Links */}
-            <div className="nav-desktop-links">
-              <Link to="/" className={`nav-desktop-link ${location.pathname === '/' && !location.search ? 'active' : ''}`}>
-                Shop
-              </Link>
-              
-              {/* Categories Dropdown */}
-              <div 
-                className="nav-dropdown-wrapper" 
-                ref={dropdownRef}
-                onMouseEnter={() => setIsCategoryDropdownOpen(true)}
-                onMouseLeave={() => setIsCategoryDropdownOpen(false)}
-              >
-                <button 
-                  type="button"
-                  className={`nav-desktop-link nav-dropdown-trigger ${location.search.includes('category=') ? 'active' : ''}`}
-                  onClick={() => setIsCategoryDropdownOpen(prev => !prev)}
-                  aria-expanded={isCategoryDropdownOpen}
-                >
-                  <span>Categories</span>
-                  <ChevronDown size={13} style={{ transform: isCategoryDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
-                </button>
-
-                {isCategoryDropdownOpen && (
-                  <div className="nav-dropdown-menu">
-                    <div className="nav-dropdown-header">Shop By Category</div>
-                    <button 
-                      type="button"
-                      className="nav-dropdown-item"
-                      onClick={() => handleCategorySelect('all')}
-                    >
-                      All Categories
-                    </button>
-                    {categories.map((cat) => (
-                      <button 
-                        key={cat.id || cat.slug}
-                        type="button"
-                        className="nav-dropdown-item"
-                        onClick={() => handleCategorySelect(cat.slug)}
-                      >
-                        {cat.name}
-                      </button>
-                    ))}
-                  </div>
-                )}
-              </div>
-
-              <Link to="/about" className={`nav-desktop-link ${location.pathname === '/about' ? 'active' : ''}`}>
-                About
-              </Link>
-              <Link to="/contact" className={`nav-desktop-link ${location.pathname === '/contact' ? 'active' : ''}`}>
-                Contact
+      <header className={`site-header ${scrolled ? 'scrolled' : ''}`}>
+        <SaleBanner />
+        <nav className={`navbar ${scrolled ? 'scrolled' : ''}`}>
+          <div className="navbar-container">
+            {/* Left: Brand Logo */}
+            <div className="nav-brand-area">
+              <Link to="/" className="nav-logo-link" aria-label="The Plain Store home">
+                <div className="nav-logo">The Plain Store</div>
               </Link>
             </div>
+            
+          {/* Center: Desktop Navigation Links */}
+          <div className="nav-desktop-links">
+            <Link to="/" className={`nav-desktop-link ${location.pathname === '/' && !location.search ? 'active' : ''}`}>
+              Shop
+            </Link>
+            
+            {/* Categories Dropdown */}
+            <div 
+              className="nav-dropdown-wrapper" 
+              ref={dropdownRef}
+              onMouseEnter={() => setIsCategoryDropdownOpen(true)}
+              onMouseLeave={() => setIsCategoryDropdownOpen(false)}
+            >
+              <button 
+                type="button"
+                className={`nav-desktop-link nav-dropdown-trigger ${location.search.includes('category=') ? 'active' : ''}`}
+                onClick={() => setIsCategoryDropdownOpen(prev => !prev)}
+                aria-expanded={isCategoryDropdownOpen}
+              >
+                <span>Categories</span>
+                <ChevronDown size={14} style={{ transform: isCategoryDropdownOpen ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s ease' }} />
+              </button>
+
+              {isCategoryDropdownOpen && (
+                <div className="nav-dropdown-menu">
+                  <div className="nav-dropdown-header">Shop By Category</div>
+                  <button 
+                    type="button"
+                    className="nav-dropdown-item"
+                    onClick={() => handleCategorySelect('all')}
+                  >
+                    All Categories
+                  </button>
+                  {categories.map((cat) => (
+                    <button 
+                      key={cat.id || cat.slug}
+                      type="button"
+                      className="nav-dropdown-item"
+                      onClick={() => handleCategorySelect(cat.slug)}
+                    >
+                      {cat.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            <Link to="/about" className={`nav-desktop-link ${location.pathname === '/about' ? 'active' : ''}`}>
+              About
+            </Link>
+            <Link to="/contact" className={`nav-desktop-link ${location.pathname === '/contact' ? 'active' : ''}`}>
+              Contact
+            </Link>
           </div>
           
           {/* Right: Actions */}
@@ -220,7 +223,6 @@ const Navbar = () => {
               onClick={() => setIsSearchModalOpen(true)}
               aria-label="Search essentials"
               title="Search"
-              style={{ background: 'none', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '6px' }}
             >
               <Search size={20} />
             </button>
@@ -264,6 +266,7 @@ const Navbar = () => {
           </div>
         </div>
       </nav>
+    </header>
 
       {/* Menu Overlay & Drawer */}
       {isMobileMenuOpen && (

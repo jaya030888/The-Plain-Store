@@ -2,27 +2,40 @@ import React from 'react';
 import { ShoppingBag, Heart } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
-import { useNavigate } from 'react-router-dom';
+import { useAuth } from '../context/AuthContext';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { replaceWithFallbackImage } from '../utils/productImage';
 
 const ProductCard = ({ product }) => {
   const { addToCart, setIsCartOpen } = useCart();
   const { toggleWishlist, isInWishlist } = useWishlist();
+  const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation();
 
   const isWished = isInWishlist(product.id);
 
   const isOutOfStock = product.stock !== undefined && product.stock !== null && Number(product.stock) <= 0;
 
-  const handleAddToCart = (e) => {
+  const handleAddToCart = async (e) => {
     e.stopPropagation();
     if (isOutOfStock) return;
-    addToCart(product);
-    setIsCartOpen(true);
+    if (!user) {
+      navigate('/login', { state: { from: location, message: 'Please log in to add items to your cart.' } });
+      return;
+    }
+    const success = await addToCart(product);
+    if (success) {
+      setIsCartOpen(true);
+    }
   };
 
   const handleToggleWishlist = (e) => {
     e.stopPropagation();
+    if (!user) {
+      navigate('/login', { state: { from: location, message: 'Please log in to add items to your wishlist.' } });
+      return;
+    }
     toggleWishlist(product);
   };
 

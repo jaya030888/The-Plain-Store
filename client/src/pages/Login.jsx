@@ -10,7 +10,8 @@ const Login = () => {
   const navigate = useNavigate();
   const location = useLocation();
 
-  const from = location.state?.from?.pathname || '/';
+  const from = (typeof location.state?.from === 'string' ? location.state?.from : location.state?.from?.pathname) || '/';
+  const infoMessage = location.state?.message;
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -29,6 +30,12 @@ const Login = () => {
       <div className="auth-card">
         <h2 className="auth-title">Welcome Back</h2>
         
+        {infoMessage && !error && (
+          <div style={{ backgroundColor: '#e7f0eb', color: '#2e5b44', padding: '12px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center', fontSize: '0.92rem', fontWeight: 500, border: '1px solid #c8ded2' }}>
+            {infoMessage}
+          </div>
+        )}
+
         {error && <div style={{ backgroundColor: '#f8d7da', color: '#721c24', padding: '12px', borderRadius: '8px', marginBottom: '20px', textAlign: 'center', fontSize: '0.95rem' }}>{error}</div>}
         
         <form onSubmit={handleSubmit}>
