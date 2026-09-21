@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, Heart, ShieldCheck, Truck, RefreshCw, CheckCircle2, AlertCircle, ExternalLink } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Heart, ShieldCheck, Truck, RefreshCw, CheckCircle2, AlertCircle, ExternalLink, Award, PackageCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { replaceWithFallbackImage } from '../utils/productImage';
@@ -126,6 +126,11 @@ const ProductDetails = () => {
                 {product.category}
               </span>
             )}
+            {product.badge && (
+              <span style={{ fontSize: '0.72rem', background: '#e6f3ed', color: '#2b7a4b', padding: '3px 10px', borderRadius: '12px', fontWeight: 600, letterSpacing: '0.6px', border: '1px solid #c1e1cf', display: 'inline-flex', alignItems: 'center', gap: '4px' }}>
+                <Award size={12} /> {product.badge}
+              </span>
+            )}
             {product.isOnSale && (
               <span style={{ fontSize: '0.72rem', background: '#F5ECE6', color: '#8F422E', padding: '3px 10px', borderRadius: '12px', fontWeight: 600, letterSpacing: '0.6px', border: '1px solid #E5D5CB' }}>
                 SALE
@@ -180,7 +185,7 @@ const ProductDetails = () => {
             </button>
           </div>
 
-          {/* Amazon Marketplace Option with Proximity Disclosure */}
+          {/* Amazon Marketplace Option */}
           <div className="pd-amazon-option" style={{ marginTop: '1.25rem', padding: '12px 16px', background: '#fbfaf7', borderRadius: '8px', border: '1px solid #e7e2d7' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
               <span style={{ fontSize: '0.86rem', color: '#444' }}>
@@ -188,9 +193,9 @@ const ProductDetails = () => {
               </span>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                 <a
-                  href={`https://www.amazon.in/s?k=${encodeURIComponent(product.title + ' The Plain Store')}&tag=theplainstore-21`}
+                  href={`https://www.amazon.in/s?k=${encodeURIComponent(product.title + ' The Plain Store')}`}
                   target="_blank"
-                  rel="nofollow noopener sponsored"
+                  rel="noopener noreferrer"
                   style={{
                     display: 'inline-flex',
                     alignItems: 'center',
@@ -205,16 +210,13 @@ const ProductDetails = () => {
                     fontWeight: 600
                   }}
                 >
-                  Check latest price on Amazon <ExternalLink size={13} />
+                  View on Amazon India <ExternalLink size={13} />
                 </a>
-                <span style={{ fontSize: '0.75rem', color: '#666', fontStyle: 'italic' }}>
-                  (paid link)
-                </span>
               </div>
             </div>
           </div>
 
-          {/* Reassurance & Value Props */}
+          {/* Reassurance & Value Props (Return Policy & Open Box Delivery) */}
           <div style={{ marginTop: '2rem', borderTop: '1px solid #eaeaea', paddingTop: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.88rem', color: '#444' }}>
               <ShieldCheck size={18} color="#468165" />
@@ -224,10 +226,27 @@ const ProductDetails = () => {
               <Truck size={18} color="#468165" />
               <span><strong>Pan-India Express:</strong> Tracked shipping with updates via SMS/Email</span>
             </div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.88rem', color: '#444' }}>
-              <RefreshCw size={18} color="#468165" />
-              <span><strong>7-Day Returns:</strong> Easy returns & replacements for damaged or incorrect items</span>
-            </div>
+
+            {/* Return Policy Declaration */}
+            {product.isReturnable === false || product.is_returnable === false ? (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.88rem', color: '#991b1b', background: '#fef2f2', padding: '10px 12px', borderRadius: '6px', border: '1px solid #fecaca' }}>
+                <AlertCircle size={18} color="#dc2626" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <span><strong>Non-Returnable:</strong> This product is final sale and not eligible for return or refund.</span>
+              </div>
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', fontSize: '0.88rem', color: '#444' }}>
+                <RefreshCw size={18} color="#468165" />
+                <span><strong>{product.returnPolicyType || `${product.returnWindowDays || product.return_window_days || 7}-Day Returns`}:</strong> Hassle-free returns & replacements for damaged or incorrect items within {product.returnWindowDays || product.return_window_days || 7} days of delivery.</span>
+              </div>
+            )}
+
+            {/* Open Box Delivery Feature */}
+            {(product.isOpenBoxDelivery || product.is_open_box_delivery) && (
+              <div style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', fontSize: '0.88rem', color: '#0369a1', background: '#f0f9ff', padding: '10px 12px', borderRadius: '6px', border: '1px solid #bae6fd' }}>
+                <PackageCheck size={18} color="#0284c7" style={{ flexShrink: 0, marginTop: '2px' }} />
+                <span><strong>Open Box Delivery Available:</strong> Delivery agent will open the package at your doorstep so you can inspect the product before accepting delivery.</span>
+              </div>
+            )}
           </div>
 
           {/* Product Specifications & Details Table */}
@@ -242,6 +261,18 @@ const ProductDetails = () => {
                 <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
                   <td style={{ padding: '8px 0', color: '#666' }}>Category</td>
                   <td style={{ padding: '8px 0', color: '#222' }}>{product.category || 'Home & Lifestyle'}</td>
+                </tr>
+                <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
+                  <td style={{ padding: '8px 0', color: '#666' }}>Return & Refund</td>
+                  <td style={{ padding: '8px 0', color: product.isReturnable === false || product.is_returnable === false ? '#dc2626' : '#2b7a4b', fontWeight: 500 }}>
+                    {product.isReturnable === false || product.is_returnable === false ? 'Non-Returnable (Final Sale)' : `${product.returnWindowDays || product.return_window_days || 7} Days Returnable`}
+                  </td>
+                </tr>
+                <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
+                  <td style={{ padding: '8px 0', color: '#666' }}>Delivery Option</td>
+                  <td style={{ padding: '8px 0', color: '#222', fontWeight: 500 }}>
+                    {(product.isOpenBoxDelivery || product.is_open_box_delivery) ? 'Open Box Delivery Eligible' : 'Standard Secure Delivery'}
+                  </td>
                 </tr>
                 <tr style={{ borderBottom: '1px solid #f0f0f0' }}>
                   <td style={{ padding: '8px 0', color: '#666' }}>Item Identifier / SKU</td>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { BookOpen, Clock, Calendar, Search, ArrowRight, ShieldCheck } from 'lucide-react';
+import { BookOpen, Clock, Calendar, Search, ArrowRight } from 'lucide-react';
 import { ARTICLES_DATA } from '../data/articlesData';
 
 const CATEGORIES = [
@@ -40,15 +40,6 @@ const Articles = () => {
         <p style={{ fontSize: '1.05rem', color: '#666', lineHeight: 1.6 }}>
           Practical advice, decluttering strategies, and curated buying recommendations to help you create a calm, functional home.
         </p>
-
-        {/* Amazon Associate Statutory Disclosure Notice */}
-        <div className="affiliate-disclosure-banner" style={{ marginTop: '24px', background: '#ffffff', border: '1px solid #d4e5dc', borderRadius: '10px', padding: '14px 20px', textAlign: 'left', display: 'flex', alignItems: 'flex-start', gap: '12px', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
-          <ShieldCheck size={20} color="#468165" style={{ flexShrink: 0, marginTop: '2px' }} />
-          <div style={{ fontSize: '0.85rem', color: '#444', lineHeight: 1.5 }}>
-            <strong style={{ color: '#222' }}>Amazon Associate Disclosure: </strong>
-            As an Amazon Associate I earn from qualifying purchases. Our editorial team independently selects and reviews all products. When you purchase through links on our site, we may earn an affiliate commission at no additional cost to you. Product links directed to Amazon are paid links.
-          </div>
-        </div>
       </div>
 
       {/* Search & Category Filter Toolbar */}

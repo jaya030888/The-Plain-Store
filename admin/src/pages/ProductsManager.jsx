@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Edit, Trash2, X, Check, Tag } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Check, Tag, RotateCcw, PackageCheck, Award, AlertCircle } from 'lucide-react';
 import { replaceWithFallbackImage } from '../utils/productImage';
 
 const ProductsManager = () => {
@@ -13,7 +13,8 @@ const ProductsManager = () => {
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [formData, setFormData] = useState({
-    name: '', slug: '', description: '', price: '', discount_price: '', category_id: '', stock: '', is_featured: false, is_on_sale: false
+    name: '', slug: '', description: '', price: '', discount_price: '', category_id: '', stock: '', is_featured: false, is_on_sale: false,
+    is_returnable: true, return_window_days: 7, is_open_box_delivery: false, badge: ''
   });
 
   // State to track inline stock editing and saved feedback
@@ -72,12 +73,17 @@ const ProductsManager = () => {
         category_id: cat ? cat.id : '',
         stock: p.stock,
         is_featured: p.isFeatured || false,
-        is_on_sale: Boolean(p.isOnSale || p.is_on_sale)
+        is_on_sale: Boolean(p.isOnSale || p.is_on_sale),
+        is_returnable: p.is_returnable !== undefined ? Boolean(p.is_returnable) : (p.isReturnable !== undefined ? Boolean(p.isReturnable) : true),
+        return_window_days: p.return_window_days ?? (p.returnWindowDays ?? 7),
+        is_open_box_delivery: Boolean(p.is_open_box_delivery || p.isOpenBoxDelivery),
+        badge: p.badge || ''
       });
     } else {
       setEditingId(null);
       setFormData({
-        name: '', slug: '', description: '', price: '', discount_price: '', category_id: '', stock: '', is_featured: false, is_on_sale: false
+        name: '', slug: '', description: '', price: '', discount_price: '', category_id: '', stock: '', is_featured: false, is_on_sale: false,
+        is_returnable: true, return_window_days: 7, is_open_box_delivery: false, badge: ''
       });
     }
     setShowModal(true);
@@ -90,11 +96,18 @@ const ProductsManager = () => {
         ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/products/${editingId}` 
         : `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/products`;
       const method = editingId ? 'PUT' : 'POST';
+      const isReturnableBool = Boolean(formData.is_returnable);
+      const windowDays = parseInt(formData.return_window_days, 10) || 7;
       const payload = {
         ...formData,
         discount_price: formData.discount_price === '' ? null : formData.discount_price,
         category_id: formData.category_id === '' ? null : formData.category_id,
-        is_on_sale: Boolean(formData.is_on_sale)
+        is_on_sale: Boolean(formData.is_on_sale),
+        is_returnable: isReturnableBool,
+        return_window_days: windowDays,
+        return_policy_type: isReturnableBool ? `${windowDays} Days Returnable` : 'Non-Returnable',
+        is_open_box_delivery: Boolean(formData.is_open_box_delivery),
+        badge: formData.badge ? formData.badge.trim() : null
       };
       const res = await fetch(url, {
         method,
@@ -237,6 +250,7 @@ const ProductsManager = () => {
                 <th style={{ padding: '15px 20px', fontWeight: '600' }}>Category</th>
                 <th style={{ padding: '15px 20px', fontWeight: '600' }}>Price</th>
                 <th style={{ padding: '15px 20px', fontWeight: '600' }}>Sale Status</th>
+                <th style={{ padding: '15px 20px', fontWeight: '600' }}>Badge & Policy</th>
                 <th style={{ padding: '15px 20px', fontWeight: '600', minWidth: '180px' }}>Stock in Inventory</th>
                 <th style={{ padding: '15px 20px', fontWeight: '600' }}>Status</th>
                 <th style={{ padding: '15px 20px', fontWeight: '600', textAlign: 'right' }}>Actions</th>
@@ -320,6 +334,33 @@ const ProductsManager = () => {
                         <Tag size={13} color={product.isOnSale ? '#8F422E' : '#94a3b8'} />
                         {product.isOnSale ? 'On Sale (Click to Stop)' : '+ Put On Sale'}
                       </button>
+                    </td>
+
+                    {/* Badge & Policy */}
+                    <td style={{ padding: '15px 20px' }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
+                        {product.badge && (
+                          <span style={{ fontSize: '0.72rem', padding: '2px 8px', backgroundColor: '#fef3c7', color: '#92400e', borderRadius: '12px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '4px', width: 'fit-content' }}>
+                            <Award size={12} /> {product.badge}
+                          </span>
+                        )}
+                        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px' }}>
+                          {product.isReturnable === false || product.is_returnable === false ? (
+                            <span style={{ fontSize: '0.72rem', padding: '2px 8px', backgroundColor: '#fee2e2', color: '#b91c1c', borderRadius: '12px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              <AlertCircle size={11} /> Non-Returnable
+                            </span>
+                          ) : (
+                            <span style={{ fontSize: '0.72rem', padding: '2px 8px', backgroundColor: '#e6f3ed', color: '#2b7a4b', borderRadius: '12px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              <RotateCcw size={11} /> {product.returnWindowDays || product.return_window_days || 7}d Returnable
+                            </span>
+                          )}
+                          {(product.isOpenBoxDelivery || product.is_open_box_delivery) && (
+                            <span style={{ fontSize: '0.72rem', padding: '2px 8px', backgroundColor: '#e0f2fe', color: '#0369a1', borderRadius: '12px', fontWeight: '600', display: 'inline-flex', alignItems: 'center', gap: '3px' }}>
+                              <PackageCheck size={11} /> Open Box
+                            </span>
+                          )}
+                        </div>
+                      </div>
                     </td>
 
                     {/* Inline Stock Editor */}
@@ -539,8 +580,165 @@ const ProductsManager = () => {
                 </select>
               </div>
 
+              {/* Product Badge / Label */}
+              <div style={{ padding: '14px', backgroundColor: '#fdfbf7', borderRadius: '8px', border: '1px solid #ebd9c8' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '0.9rem', color: '#8F422E', marginBottom: '8px' }}>
+                  <Award size={16} /> Product Badge / Label (Shown on storefront cards)
+                </label>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginBottom: '8px' }}>
+                  {['', 'Best Seller', 'New Arrival', 'Trending', 'Top Rated', 'Handmade', 'Limited Edition'].map((badgeOption) => (
+                    <button
+                      key={badgeOption || 'none'}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, badge: badgeOption })}
+                      style={{
+                        padding: '4px 10px',
+                        borderRadius: '16px',
+                        fontSize: '0.78rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        border: formData.badge === badgeOption ? '2px solid #8F422E' : '1px solid #cbd5e1',
+                        backgroundColor: formData.badge === badgeOption ? '#8F422E' : '#fff',
+                        color: formData.badge === badgeOption ? '#fff' : '#475569'
+                      }}
+                    >
+                      {badgeOption || 'None (No Badge)'}
+                    </button>
+                  ))}
+                </div>
+                <input
+                  type="text"
+                  placeholder="Or enter custom badge text (e.g. Eco Friendly, Staff Pick)"
+                  value={formData.badge || ''}
+                  onChange={e => setFormData({ ...formData, badge: e.target.value })}
+                  style={{ width: '100%', padding: '8px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.88rem' }}
+                />
+              </div>
+
+              {/* Return Policy & Refund Window Settings */}
+              <div style={{ padding: '14px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '0.9rem', color: '#1e293b', marginBottom: '10px' }}>
+                  <RotateCcw size={16} color="#468165" /> Return & Refund Policy Declaration
+                </label>
+
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '10px', marginBottom: '12px' }}>
+                  <label 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '8px', 
+                      padding: '10px 14px', 
+                      borderRadius: '6px', 
+                      border: formData.is_returnable ? '2px solid #468165' : '1px solid #cbd5e1',
+                      backgroundColor: formData.is_returnable ? '#e6f3ed' : '#fff',
+                      cursor: 'pointer',
+                      fontWeight: '500',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    <input 
+                      type="radio" 
+                      name="returnable_choice"
+                      checked={Boolean(formData.is_returnable)} 
+                      onChange={() => setFormData({ ...formData, is_returnable: true })} 
+                    />
+                    <span><strong>Returnable & Refundable</strong></span>
+                  </label>
+
+                  <label 
+                    style={{ 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      gap: '8px', 
+                      padding: '10px 14px', 
+                      borderRadius: '6px', 
+                      border: !formData.is_returnable ? '2px solid #dc2626' : '1px solid #cbd5e1',
+                      backgroundColor: !formData.is_returnable ? '#fee2e2' : '#fff',
+                      cursor: 'pointer',
+                      fontWeight: '500',
+                      fontSize: '0.85rem'
+                    }}
+                  >
+                    <input 
+                      type="radio" 
+                      name="returnable_choice"
+                      checked={!formData.is_returnable} 
+                      onChange={() => setFormData({ ...formData, is_returnable: false })} 
+                    />
+                    <span><strong>Non-Returnable (Final Sale)</strong></span>
+                  </label>
+                </div>
+
+                {/* Return Window Days (only shown if Returnable) */}
+                {formData.is_returnable ? (
+                  <div style={{ marginTop: '8px', padding: '10px', backgroundColor: '#fff', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+                    <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
+                      Return Window (Days customer has to initiate return):
+                    </label>
+                    <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                      {[7, 10, 14, 30].map(days => (
+                        <button
+                          key={days}
+                          type="button"
+                          onClick={() => setFormData({ ...formData, return_window_days: days })}
+                          style={{
+                            padding: '5px 12px',
+                            borderRadius: '4px',
+                            fontSize: '0.82rem',
+                            fontWeight: '600',
+                            cursor: 'pointer',
+                            border: Number(formData.return_window_days) === days ? '2px solid #468165' : '1px solid #cbd5e1',
+                            backgroundColor: Number(formData.return_window_days) === days ? '#468165' : '#f8fafc',
+                            color: Number(formData.return_window_days) === days ? '#fff' : '#475569'
+                          }}
+                        >
+                          {days} Days
+                        </button>
+                      ))}
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px', marginLeft: '8px' }}>
+                        <span style={{ fontSize: '0.82rem', color: '#64748b' }}>Custom:</span>
+                        <input
+                          type="number"
+                          min="1"
+                          max="90"
+                          value={formData.return_window_days || ''}
+                          onChange={e => setFormData({ ...formData, return_window_days: e.target.value })}
+                          style={{ width: '60px', padding: '4px 8px', borderRadius: '4px', border: '1px solid #cbd5e1', fontSize: '0.82rem' }}
+                        />
+                        <span style={{ fontSize: '0.82rem', color: '#64748b' }}>days</span>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
+                  <p style={{ margin: '6px 0 0 0', fontSize: '0.8rem', color: '#dc2626' }}>
+                    <AlertCircle size={13} style={{ verticalAlign: 'middle', marginRight: '4px' }} />
+                    This product will be declared as Non-Returnable on the storefront product page and cannot be returned by buyers.
+                  </p>
+                )}
+              </div>
+
+              {/* Delivery Features (Open Box Delivery) */}
+              <div style={{ padding: '14px', backgroundColor: '#f0f9ff', borderRadius: '8px', border: '1px solid #bae6fd' }}>
+                <label style={{ display: 'flex', alignItems: 'flex-start', gap: '10px', cursor: 'pointer', fontWeight: '500', color: '#0369a1' }}>
+                  <input 
+                    type="checkbox" 
+                    checked={Boolean(formData.is_open_box_delivery)} 
+                    onChange={e => setFormData({ ...formData, is_open_box_delivery: e.target.checked })} 
+                    style={{ marginTop: '3px' }}
+                  />
+                  <div>
+                    <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '700', fontSize: '0.9rem' }}>
+                      <PackageCheck size={16} /> Open Box Delivery Available
+                    </span>
+                    <span style={{ display: 'block', fontSize: '0.8rem', color: '#0c4a6e', marginTop: '2px' }}>
+                      Delivery partner will open package in presence of customer for physical inspection before delivery acceptance.
+                    </span>
+                  </div>
+                </label>
+              </div>
+
               {/* Checkbox Options */}
-              <div style={{ marginTop: '10px', display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', padding: '12px', backgroundColor: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer', fontWeight: '500', color: '#1e293b' }}>
                   <input 
                     type="checkbox" 

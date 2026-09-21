@@ -61,7 +61,16 @@ exports.getAllProducts = async (req, res) => {
       reviewCount: row.review_count,
       isFeatured: row.is_featured,
       isOnSale: Boolean(row.is_on_sale || (row.discount_price && parseFloat(row.discount_price) < parseFloat(row.price))),
-      is_on_sale: Boolean(row.is_on_sale)
+      is_on_sale: Boolean(row.is_on_sale),
+      isReturnable: row.is_returnable !== null && row.is_returnable !== undefined ? Boolean(row.is_returnable) : true,
+      is_returnable: row.is_returnable !== null && row.is_returnable !== undefined ? Boolean(row.is_returnable) : true,
+      returnWindowDays: row.return_window_days !== null && row.return_window_days !== undefined ? Number(row.return_window_days) : 7,
+      return_window_days: row.return_window_days !== null && row.return_window_days !== undefined ? Number(row.return_window_days) : 7,
+      returnPolicyType: row.return_policy_type || (row.is_returnable === false ? 'Non-Returnable' : `${row.return_window_days || 7} Days Returnable`),
+      return_policy_type: row.return_policy_type || (row.is_returnable === false ? 'Non-Returnable' : `${row.return_window_days || 7} Days Returnable`),
+      isOpenBoxDelivery: Boolean(row.is_open_box_delivery),
+      is_open_box_delivery: Boolean(row.is_open_box_delivery),
+      badge: row.badge || null
     }));
 
     res.json(products);
@@ -121,7 +130,16 @@ exports.getProductById = async (req, res) => {
       rating: row.rating,
       reviewCount: row.review_count,
       isFeatured: row.is_featured,
-      isOnSale: Boolean(row.is_on_sale || (row.discount_price && parseFloat(row.discount_price) < parseFloat(row.price)))
+      isOnSale: Boolean(row.is_on_sale || (row.discount_price && parseFloat(row.discount_price) < parseFloat(row.price))),
+      isReturnable: row.is_returnable !== null && row.is_returnable !== undefined ? Boolean(row.is_returnable) : true,
+      is_returnable: row.is_returnable !== null && row.is_returnable !== undefined ? Boolean(row.is_returnable) : true,
+      returnWindowDays: row.return_window_days !== null && row.return_window_days !== undefined ? Number(row.return_window_days) : 7,
+      return_window_days: row.return_window_days !== null && row.return_window_days !== undefined ? Number(row.return_window_days) : 7,
+      returnPolicyType: row.return_policy_type || (row.is_returnable === false ? 'Non-Returnable' : `${row.return_window_days || 7} Days Returnable`),
+      return_policy_type: row.return_policy_type || (row.is_returnable === false ? 'Non-Returnable' : `${row.return_window_days || 7} Days Returnable`),
+      isOpenBoxDelivery: Boolean(row.is_open_box_delivery),
+      is_open_box_delivery: Boolean(row.is_open_box_delivery),
+      badge: row.badge || null
     };
 
     res.json(product);
@@ -157,7 +175,12 @@ exports.getFeaturedProducts = async (req, res) => {
       rating: row.rating,
       reviewCount: row.review_count,
       isFeatured: row.is_featured,
-      isOnSale: Boolean(row.is_on_sale || (row.discount_price && parseFloat(row.discount_price) < parseFloat(row.price)))
+      isOnSale: Boolean(row.is_on_sale || (row.discount_price && parseFloat(row.discount_price) < parseFloat(row.price))),
+      isReturnable: row.is_returnable !== null && row.is_returnable !== undefined ? Boolean(row.is_returnable) : true,
+      returnWindowDays: row.return_window_days !== null && row.return_window_days !== undefined ? Number(row.return_window_days) : 7,
+      returnPolicyType: row.return_policy_type || (row.is_returnable === false ? 'Non-Returnable' : `${row.return_window_days || 7} Days Returnable`),
+      isOpenBoxDelivery: Boolean(row.is_open_box_delivery),
+      badge: row.badge || null
     }));
 
     res.json(products);
@@ -169,11 +192,27 @@ exports.getFeaturedProducts = async (req, res) => {
 
 exports.createProduct = async (req, res) => {
   try {
-    const { name, slug, description, price, discount_price, category_id, stock, is_featured, is_on_sale, image_url } = req.body;
+    const { 
+      name, slug, description, price, discount_price, category_id, stock, 
+      is_featured, is_on_sale, image_url,
+      is_returnable, return_window_days, return_policy_type, is_open_box_delivery, badge
+    } = req.body;
     
+    const isReturnableVal = is_returnable !== undefined ? Boolean(is_returnable) : true;
+    const returnWindowVal = return_window_days !== undefined && return_window_days !== '' ? parseInt(return_window_days, 10) : 7;
+    const policyTypeVal = return_policy_type || (isReturnableVal ? `${returnWindowVal} Days Returnable` : 'Non-Returnable');
+    const openBoxVal = Boolean(is_open_box_delivery);
+    const badgeVal = badge && badge.trim() ? badge.trim() : null;
+
     const [result] = await db.query(
-      'INSERT INTO products (name, slug, description, price, discount_price, category_id, stock, is_featured, is_on_sale) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
-      [name, slug, description, price, discount_price, category_id, stock, is_featured || false, is_on_sale || false]
+      `INSERT INTO products 
+        (name, slug, description, price, discount_price, category_id, stock, is_featured, is_on_sale, is_returnable, return_window_days, return_policy_type, is_open_box_delivery, badge) 
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      [
+        name, slug, description, price, discount_price, category_id, stock, 
+        is_featured || false, is_on_sale || false, 
+        isReturnableVal, returnWindowVal, policyTypeVal, openBoxVal, badgeVal
+      ]
     );
 
     if (image_url) {
@@ -193,11 +232,30 @@ exports.createProduct = async (req, res) => {
 exports.updateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { name, slug, description, price, discount_price, category_id, stock, is_featured, is_on_sale } = req.body;
+    const { 
+      name, slug, description, price, discount_price, category_id, stock, 
+      is_featured, is_on_sale,
+      is_returnable, return_window_days, return_policy_type, is_open_box_delivery, badge
+    } = req.body;
+
+    const isReturnableVal = is_returnable !== undefined ? Boolean(is_returnable) : true;
+    const returnWindowVal = return_window_days !== undefined && return_window_days !== '' ? parseInt(return_window_days, 10) : 7;
+    const policyTypeVal = return_policy_type || (isReturnableVal ? `${returnWindowVal} Days Returnable` : 'Non-Returnable');
+    const openBoxVal = Boolean(is_open_box_delivery);
+    const badgeVal = badge && badge.trim() ? badge.trim() : null;
     
     await db.query(
-      'UPDATE products SET name = ?, slug = ?, description = ?, price = ?, discount_price = ?, category_id = ?, stock = ?, is_featured = ?, is_on_sale = ? WHERE id = ?',
-      [name, slug, description, price, discount_price, category_id, stock, is_featured, is_on_sale || false, id]
+      `UPDATE products 
+       SET name = ?, slug = ?, description = ?, price = ?, discount_price = ?, 
+           category_id = ?, stock = ?, is_featured = ?, is_on_sale = ?,
+           is_returnable = ?, return_window_days = ?, return_policy_type = ?, is_open_box_delivery = ?, badge = ?
+       WHERE id = ?`,
+      [
+        name, slug, description, price, discount_price, 
+        category_id, stock, is_featured || false, is_on_sale || false,
+        isReturnableVal, returnWindowVal, policyTypeVal, openBoxVal, badgeVal,
+        id
+      ]
     );
 
     res.json({ message: 'Product updated successfully' });
@@ -210,7 +268,7 @@ exports.updateProduct = async (req, res) => {
 exports.quickUpdateProduct = async (req, res) => {
   try {
     const { id } = req.params;
-    const { stock, is_on_sale, discount_price } = req.body;
+    const { stock, is_on_sale, discount_price, is_returnable, return_window_days, return_policy_type, is_open_box_delivery, badge } = req.body;
     const updates = [];
     const params = [];
 
@@ -225,6 +283,26 @@ exports.quickUpdateProduct = async (req, res) => {
     if (discount_price !== undefined) {
       updates.push('discount_price = ?');
       params.push(discount_price === '' || discount_price === null ? null : parseFloat(discount_price));
+    }
+    if (is_returnable !== undefined) {
+      updates.push('is_returnable = ?');
+      params.push(Boolean(is_returnable));
+    }
+    if (return_window_days !== undefined) {
+      updates.push('return_window_days = ?');
+      params.push(parseInt(return_window_days, 10));
+    }
+    if (return_policy_type !== undefined) {
+      updates.push('return_policy_type = ?');
+      params.push(return_policy_type);
+    }
+    if (is_open_box_delivery !== undefined) {
+      updates.push('is_open_box_delivery = ?');
+      params.push(Boolean(is_open_box_delivery));
+    }
+    if (badge !== undefined) {
+      updates.push('badge = ?');
+      params.push(badge && badge.trim() ? badge.trim() : null);
     }
 
     if (updates.length === 0) {

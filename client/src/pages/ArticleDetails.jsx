@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { useParams, Link, useNavigate } from 'react-router-dom';
-import { ArrowLeft, Clock, Calendar, ShieldCheck, ExternalLink, Tag, CheckCircle2, ChevronRight } from 'lucide-react';
+import { ArrowLeft, Clock, Calendar, ExternalLink, Tag, CheckCircle2, ChevronRight } from 'lucide-react';
 import { ARTICLES_DATA } from '../data/articlesData';
 
 const ArticleDetails = () => {
@@ -88,15 +88,6 @@ const ArticleDetails = () => {
         </div>
       </header>
 
-      {/* Mandatory Statutory Amazon Associate Disclosure Notice */}
-      <aside className="affiliate-disclosure-card" style={{ background: '#f8faf9', border: '1px solid #c9ded3', borderRadius: '10px', padding: '16px 20px', marginBottom: '36px', display: 'flex', gap: '14px', alignItems: 'flex-start' }}>
-        <ShieldCheck size={22} color="#468165" style={{ flexShrink: 0, marginTop: '2px' }} />
-        <div style={{ fontSize: '0.86rem', color: '#333', lineHeight: 1.55 }}>
-          <strong style={{ color: '#1a1a1a' }}>Editorial Disclosure: </strong>
-          <strong>As an Amazon Associate I earn from qualifying purchases.</strong> We independently test, curate, and review products. If you click on links pointing to Amazon and make a purchase, we may receive an affiliate commission at no additional cost to you. Such links are designated as <em>(paid link)</em> in accordance with the Amazon Associates Program Operating Agreement.
-        </div>
-      </aside>
-
       {/* Featured Cover Image */}
       <div style={{ borderRadius: '14px', overflow: 'hidden', marginBottom: '40px', boxShadow: '0 6px 20px rgba(0,0,0,0.06)' }}>
         <img
@@ -123,7 +114,7 @@ const ArticleDetails = () => {
           </section>
         ))}
 
-        {/* Featured Editorial Recommendations (Affiliate Products) */}
+        {/* Featured Editorial Recommendations */}
         {article.recommendations && article.recommendations.length > 0 && (
           <div style={{ marginTop: '50px', borderTop: '2px solid #eaeaea', paddingTop: '40px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '10px' }}>
@@ -140,7 +131,7 @@ const ArticleDetails = () => {
               {article.recommendations.map((rec, rIdx) => (
                 <div
                   key={rIdx}
-                  className="affiliate-product-card"
+                  className="editorial-recommendation-card"
                   style={{
                     background: '#ffffff',
                     border: '1px solid #dfded8',
@@ -177,7 +168,7 @@ const ArticleDetails = () => {
                     <a
                       href={rec.amazonUrl}
                       target="_blank"
-                      rel="nofollow noopener sponsored"
+                      rel="noopener noreferrer"
                       className="btn-primary"
                       style={{
                         display: 'inline-flex',
@@ -189,14 +180,8 @@ const ArticleDetails = () => {
                         fontWeight: 600
                       }}
                     >
-                      Check latest price on Amazon <ExternalLink size={15} />
+                      View on Amazon <ExternalLink size={15} />
                     </a>
-                    <span style={{ fontSize: '0.8rem', color: '#666', fontStyle: 'italic' }}>
-                      (paid link)
-                    </span>
-                  </div>
-                  <div style={{ fontSize: '0.72rem', color: '#888', marginTop: '10px' }}>
-                    * Product prices and availability are accurate as of the date/time indicated and are subject to change. Any price and availability information displayed on Amazon.in at the time of purchase will apply to the purchase of this product.
                   </div>
                 </div>
               ))}

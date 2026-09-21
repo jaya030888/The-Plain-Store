@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Mail, Phone, Clock, MapPin, Send, CheckCircle2, AlertCircle } from 'lucide-react';
+import { Mail, Clock, MapPin, Send, CheckCircle2, AlertCircle } from 'lucide-react';
 import { API_URL } from '../utils/api';
 
 const Contact = () => {

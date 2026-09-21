@@ -17,6 +17,24 @@ const AdminDashboard = () => {
 
   useEffect(() => {
     fetchStats();
+
+    const interval = setInterval(() => {
+      fetchStats();
+    }, 5000);
+
+    const handleSync = () => {
+      if (document.visibilityState === 'visible') {
+        fetchStats();
+      }
+    };
+    window.addEventListener('focus', handleSync);
+    document.addEventListener('visibilitychange', handleSync);
+
+    return () => {
+      clearInterval(interval);
+      window.removeEventListener('focus', handleSync);
+      document.removeEventListener('visibilitychange', handleSync);
+    };
   }, [adminToken]);
 
   const fetchStats = async () => {

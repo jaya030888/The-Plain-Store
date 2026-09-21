@@ -219,6 +219,18 @@ exports.getAllOrders = async (req, res) => {
       LEFT JOIN addresses a ON o.address_id = a.id
       ORDER BY o.created_at DESC
     `);
+
+    for (let order of orders) {
+      const [items] = await db.query(`
+        SELECT oi.*, p.name as title, 
+               (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as image 
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = ?
+      `, [order.id]);
+      order.items = items;
+    }
+
     res.json(orders);
   } catch (error) {
     console.error('Error fetching all orders:', error);
@@ -331,5 +343,140 @@ exports.trackOrder = async (req, res) => {
   } catch (error) {
     console.error('Error tracking order:', error);
     res.status(500).json({ message: 'Server error tracking order' });
+  }
+};
+
+// Customer Return Request
+exports.requestReturn = async (req, res) => {
+  try {
+    const userId = req.user?.id;
+    const { id } = req.params; // order id
+    const { reason, details } = req.body;
+
+    if (!reason || !reason.trim()) {
+      return res.status(400).json({ message: 'Return reason is required' });
+    }
+
+    const [orders] = await db.query(
+      'SELECT id, user_id, order_status, return_status FROM orders WHERE id = ?',
+      [id]
+    );
+
+    if (orders.length === 0) {
+      return res.status(404).json({ message: 'Order not found' });
+    }
+
+    const order = orders[0];
+    if (userId && order.user_id && order.user_id !== userId) {
+      return res.status(403).json({ message: 'You are not authorized to return this order' });
+    }
+
+    if (order.return_status && order.return_status !== 'return_rejected') {
+      return res.status(400).json({ message: `A return has already been requested (${order.return_status})` });
+    }
+
+    // Insert into order_returns
+    const [returnResult] = await db.query(
+      `INSERT INTO order_returns (order_id, user_id, reason, details, status)
+       VALUES (?, ?, ?, ?, 'return_requested')`,
+      [id, userId || null, reason.trim(), (details || '').trim()]
+    );
+
+    const returnId = returnResult?.insertId || returnResult?.[0]?.id || returnResult?.id;
+
+    // Update order status
+    await db.query(
+      `UPDATE orders 
+       SET order_status = 'return_requested', 
+           return_status = 'return_requested', 
+           return_reason = ?, 
+           return_requested_at = CURRENT_TIMESTAMP,
+           updated_at = CURRENT_TIMESTAMP
+       WHERE id = ?`,
+      [reason.trim(), id]
+    );
+
+    res.status(201).json({
+      message: 'Return request submitted successfully',
+      returnId,
+      status: 'return_requested'
+    });
+  } catch (error) {
+    console.error('Error requesting return:', error);
+    res.status(500).json({ message: 'Server error processing return request' });
+  }
+};
+
+// Admin: Get all returns with full user & product details
+exports.getAllReturns = async (req, res) => {
+  try {
+    const [returns] = await db.query(`
+      SELECT r.*,
+             o.tracking_number, o.total as order_total, o.created_at as order_date,
+             o.order_status,
+             COALESCE(u.name, a.full_name, 'Guest Customer') as customer_name,
+             COALESCE(u.email, 'Not available') as customer_email,
+             a.phone as customer_phone
+      FROM order_returns r
+      JOIN orders o ON r.order_id = o.id
+      LEFT JOIN users u ON r.user_id = u.id
+      LEFT JOIN addresses a ON o.address_id = a.id
+      ORDER BY r.created_at DESC
+    `);
+
+    for (let ret of returns) {
+      const [items] = await db.query(`
+        SELECT oi.*, p.name as title,
+               (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as image
+        FROM order_items oi
+        JOIN products p ON oi.product_id = p.id
+        WHERE oi.order_id = ?
+      `, [ret.order_id]);
+      ret.items = items;
+    }
+
+    res.json(returns);
+  } catch (error) {
+    console.error('Error fetching returns:', error);
+    res.status(500).json({ message: 'Server error fetching returns' });
+  }
+};
+
+// Admin: Update return status
+exports.updateReturnStatus = async (req, res) => {
+  try {
+    const { id } = req.params; // return id
+    const { status, admin_notes } = req.body; // 'return_approved', 'returned', 'return_rejected'
+
+    if (!status) {
+      return res.status(400).json({ message: 'Status is required' });
+    }
+
+    const [returnRows] = await db.query('SELECT * FROM order_returns WHERE id = ?', [id]);
+    if (returnRows.length === 0) {
+      return res.status(404).json({ message: 'Return record not found' });
+    }
+
+    const ret = returnRows[0];
+
+    await db.query(
+      `UPDATE order_returns 
+       SET status = ?, admin_notes = ?, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = ?`,
+      [status, admin_notes || ret.admin_notes || null, id]
+    );
+
+    // Update corresponding order
+    await db.query(
+      `UPDATE orders 
+       SET order_status = ?, return_status = ?, return_notes = ?, updated_at = CURRENT_TIMESTAMP 
+       WHERE id = ?`,
+      [status, status, admin_notes || null, ret.order_id]
+    );
+
+    res.json({ message: 'Return status updated successfully' });
+  } catch (error) {
+    console.error('Error updating return status:', error);
+    res.status(500).json({ message: 'Server error updating return status' });
   }
 };

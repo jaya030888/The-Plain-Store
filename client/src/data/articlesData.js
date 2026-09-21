@@ -32,13 +32,13 @@ export const ARTICLES_DATA = [
         title: 'Minimalist Ceramic Ribbed Vase',
         rationale: 'Crafted with an earthy matte finish, this neutral ceramic vase adds sculpture and subtle geometry to any mantle or dining credenza without overpowering subtle decor palettes.',
         features: ['Matte unglazed exterior', 'Waterproof sealed interior', 'Height: 22 cm', 'Weight: 850g'],
-        amazonUrl: 'https://www.amazon.in/dp/B08XYZ1234?tag=theplainstore-21'
+        amazonUrl: 'https://www.amazon.in/dp/B08XYZ1234'
       },
       {
         title: 'Natural Linen Textured Throw Blanket',
         rationale: 'A breathable, pre-washed linen-cotton blend that adds organic texture to neutral couches while offering lightweight warmth year-round.',
         features: ['100% Breathable cotton-linen', 'Fringed edge detail', 'Machine washable at 30°C'],
-        amazonUrl: 'https://www.amazon.in/dp/B09ABC5678?tag=theplainstore-21'
+        amazonUrl: 'https://www.amazon.in/dp/B09ABC5678'
       }
     ]
   },
@@ -72,7 +72,7 @@ export const ARTICLES_DATA = [
         title: 'Borosilicate Glass Storage Jars with Bamboo Lids (Set of 4)',
         rationale: 'Sturdy, heat-resistant borosilicate glass canisters that keep pantry staples such as coffee beans, pulses, and rolled oats fresh while streamlining kitchen aesthetics.',
         features: ['Airtight silicone gasket', 'BPA-free & dishwasher safe', 'Stackable design'],
-        amazonUrl: 'https://www.amazon.in/dp/B07XYZ9999?tag=theplainstore-21'
+        amazonUrl: 'https://www.amazon.in/dp/B07XYZ9999'
       }
     ]
   },
@@ -106,7 +106,7 @@ export const ARTICLES_DATA = [
         title: 'Solid Oak Wood Monitor Stand & Desktop Organizer',
         rationale: 'Elevates your screen to an optimal ergonomic height while providing an open bay underneath to store a wireless keyboard and mouse when the workday concludes.',
         features: ['Solid natural wood finish', 'Supports up to 25 kg', 'Non-scratch silicone feet'],
-        amazonUrl: 'https://www.amazon.in/dp/B08A1B2C3D?tag=theplainstore-21'
+        amazonUrl: 'https://www.amazon.in/dp/B08A1B2C3D'
       }
     ]
   },
@@ -140,7 +140,7 @@ export const ARTICLES_DATA = [
         title: 'Minimalist Bedside Ceramic Water Carafe with Tumbler Cup',
         rationale: 'A compact glass-ceramic carafe where the drinking cup doubles as a protective lid against dust, combining utility with quiet bedside aesthetics.',
         features: ['500ml capacity', 'Lead-free food-safe glass', 'Compact bedside footprint'],
-        amazonUrl: 'https://www.amazon.in/dp/B07N1P2Q3R?tag=theplainstore-21'
+        amazonUrl: 'https://www.amazon.in/dp/B07N1P2Q3R'
       }
     ]
   },
@@ -174,7 +174,7 @@ export const ARTICLES_DATA = [
         title: 'Natural Walnut Wood Entryway Catchall Tray',
         rationale: 'Smooth carved walnut valet tray with divided compartments for keys, watch, and coins, preventing surface scratches on your entryway console table.',
         features: ['Solid walnut wood', 'Felt-lined bottom pad', 'Dimensions: 25 x 18 cm'],
-        amazonUrl: 'https://www.amazon.in/dp/B08C4D5E6F?tag=theplainstore-21'
+        amazonUrl: 'https://www.amazon.in/dp/B08C4D5E6F'
       }
     ]
   },
@@ -208,7 +208,7 @@ export const ARTICLES_DATA = [
         title: 'Natural Red Cedar Closet Rings & Blocks (Pack of 24)',
         rationale: 'Chemical-free aromatic cedar blocks that naturally absorb closet moisture and protect garments from silverfish and moths without synthetic perfumes.',
         features: ['100% natural North American cedar', 'Smooth splinter-free finish', 'Includes hanger rings and drawer cubes'],
-        amazonUrl: 'https://www.amazon.in/dp/B07P8Q9R0S?tag=theplainstore-21'
+        amazonUrl: 'https://www.amazon.in/dp/B07P8Q9R0S'
       }
     ]
   },
@@ -242,7 +242,7 @@ export const ARTICLES_DATA = [
         title: 'Amber Glass Soap Dispenser with Rustproof Stainless Steel Pump',
         rationale: 'Thick amber glass protects liquid formulations from UV breakdown while elevating bathroom aesthetics with timeless minimalist apothecary charm.',
         features: ['500ml capacity', 'Matte black 304 stainless pump', 'Lead-free recycled glass'],
-        amazonUrl: 'https://www.amazon.in/dp/B08L2M3N4P?tag=theplainstore-21'
+        amazonUrl: 'https://www.amazon.in/dp/B08L2M3N4P'
       }
     ]
   },
@@ -276,7 +276,7 @@ export const ARTICLES_DATA = [
         title: 'Matte White Ceramic Plant Pot with Drainage Hole and Saucer',
         rationale: 'Clean cylindrical planter featuring an unglazed interior and a seamless matching saucer that protects hardwood floors and table surfaces.',
         features: ['Diameter: 18 cm', 'Includes silicone drainage plug and mesh screen', 'Sturdy ceramic stoneware'],
-        amazonUrl: 'https://www.amazon.in/dp/B08V5W6X7Y?tag=theplainstore-21'
+        amazonUrl: 'https://www.amazon.in/dp/B08V5W6X7Y'
       }
     ]
   },
@@ -310,7 +310,7 @@ export const ARTICLES_DATA = [
         title: 'Stainless Steel Gooseneck Pour-Over Kettle (1.0L)',
         rationale: 'Ergonomic counterbalance handle with an elongated gooseneck spout for precise 90-degree laminar water flow control during manual coffee extraction.',
         features: ['Food-grade 304 stainless steel', 'Stovetop compatible', 'Heat-resistant wooden handle'],
-        amazonUrl: 'https://www.amazon.in/dp/B07T1U2V3W?tag=theplainstore-21'
+        amazonUrl: 'https://www.amazon.in/dp/B07T1U2V3W'
       }
     ]
   },
@@ -344,7 +344,7 @@ export const ARTICLES_DATA = [
         title: 'Minimalist Floating Solid Wood Wall Shelves (Set of 3)',
         rationale: 'Clean invisible bracket mounting system that lets the warm natural grain of solid pine wood float effortlessly on apartment walls.',
         features: ['Hidden heavy-duty steel brackets', 'Holds up to 15 kg per shelf', 'Includes wall anchors and hardware'],
-        amazonUrl: 'https://www.amazon.in/dp/B09J8K7L6M?tag=theplainstore-21'
+        amazonUrl: 'https://www.amazon.in/dp/B09J8K7L6M'
       }
     ]
   }

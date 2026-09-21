@@ -23,7 +23,9 @@ import PrivacyPolicy from './pages/PrivacyPolicy';
 import TermsConditions from './pages/TermsConditions';
 import ShippingPolicy from './pages/ShippingPolicy';
 import ReturnRefundPolicy from './pages/ReturnRefundPolicy';
+import RefundPolicy from './pages/RefundPolicy';
 import CancellationPolicy from './pages/CancellationPolicy';
+import GrievanceRedressalPolicy from './pages/GrievanceRedressalPolicy';
 import Articles from './pages/Articles';
 import ArticleDetails from './pages/ArticleDetails';
 import ProtectedRoute from './components/ProtectedRoute';
@@ -51,8 +53,10 @@ function App() {
                   <Route path="/terms" element={<TermsConditions />} />
                   <Route path="/shipping-policy" element={<ShippingPolicy />} />
                   <Route path="/returns-policy" element={<ReturnRefundPolicy />} />
-                  <Route path="/refund-policy" element={<ReturnRefundPolicy />} />
+                  <Route path="/refund-policy" element={<RefundPolicy />} />
                   <Route path="/cancellation-policy" element={<CancellationPolicy />} />
+                  <Route path="/grievance-policy" element={<GrievanceRedressalPolicy />} />
+                  <Route path="/grievance-redressal" element={<GrievanceRedressalPolicy />} />
                   <Route path="/product/:id" element={<ProductDetails />} />
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />

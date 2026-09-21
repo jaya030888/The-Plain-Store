@@ -80,25 +80,6 @@ const About = () => {
               </li>
             </ul>
           </div>
-
-          {/* Editorial Transparency & Amazon Associates Disclosure */}
-          <div style={{ marginTop: '35px', paddingTop: '30px', borderTop: '1px solid #eee' }}>
-            <h2 style={{ fontSize: '1.4rem', color: '#111827', marginBottom: '12px' }}>
-              Editorial Independence & Amazon Associates Participation
-            </h2>
-            <div style={{ background: '#f8faf9', border: '1px solid #c8ddd2', borderRadius: '8px', padding: '16px 20px', marginBottom: '16px' }}>
-              <p style={{ margin: '0 0 6px 0', fontWeight: 600, color: '#1b4332' }}>
-                As an Amazon Associate I earn from qualifying purchases.
-              </p>
-              <p style={{ margin: 0, fontSize: '0.88rem', color: '#444', lineHeight: 1.6 }}>
-                The Plain Store is an independent e-commerce brand and curated lifestyle publication. We participate in the Amazon Services LLC Associates Program and the Amazon.in Associates Programme, an affiliate advertising initiative that enables independent websites to earn referral fees by recommending and linking to products on Amazon.in.
-              </p>
-            </div>
-            <p style={{ fontSize: '0.92rem', color: '#555', lineHeight: 1.6, margin: 0 }}>
-              Please note: The Plain Store is an independent business. We are not owned, operated, or officially endorsed by Amazon.com, Inc. or any of its affiliates. All Amazon product recommendations on our site are independently curated by our editorial team. Links pointing to Amazon are paid affiliate links.
-            </p>
-          </div>
-
         </div>
 
         {/* Call to Action Bar */}
