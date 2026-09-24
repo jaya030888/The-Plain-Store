@@ -132,6 +132,19 @@ table {
   display: none;
 }
 
+/* Tablet & Mobile Media Queries */
+@media (max-width: 1024px) {
+  .admin-sidebar {
+    width: 230px !important;
+  }
+  .desktop-header {
+    padding: 12px 20px !important;
+  }
+  .admin-main-content {
+    padding: 20px 20px !important;
+  }
+}
+
 @media (max-width: 900px) {
   /* Layout adjustments */
   .admin-layout-wrapper {
@@ -141,12 +154,12 @@ table {
   .admin-sidebar {
     position: fixed;
     top: 0;
-    left: -300px;
+    left: -320px;
     height: 100vh;
-    width: 250px;
+    width: 270px !important;
     z-index: 1000;
     transition: left 0.3s ease;
-    box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+    box-shadow: 4px 0 20px rgba(0,0,0,0.15);
   }
   
   .admin-sidebar.open {
@@ -157,13 +170,18 @@ table {
     display: flex !important;
     justify-content: space-between;
     align-items: center;
-    padding: 15px 20px;
+    padding: 12px 18px;
     background: #fff;
-    border-bottom: 1px solid #eee;
+    border-bottom: 1px solid #e2e8f0;
+    position: sticky;
+    top: 0;
+    z-index: 99;
   }
   
   .admin-main-content {
-    padding: 20px !important;
+    padding: 16px !important;
+    height: auto !important;
+    min-height: calc(100vh - 60px);
   }
 
   .desktop-header {
@@ -174,24 +192,41 @@ table {
     display: block !important;
   }
 
-  /* Grid Layouts */
-  div[style*="grid-template-columns"],
-  form[style*="grid-template-columns"] {
-    grid-template-columns: 1fr !important;
-  }
-
   /* Modals */
-  .checkout-modal, .product-modal {
-    width: 95% !important;
-    padding: 20px !important;
+  .modal-overlay > div {
+    width: 94vw !important;
+    max-width: 94vw !important;
+    max-height: 92vh !important;
+    padding: 18px 14px !important;
+    margin: auto 10px !important;
   }
 
   /* Filter sections */
   .admin-filters {
-    flex-direction: column;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 10px !important;
   }
-  .admin-filters input, .admin-filters select {
+  .admin-filters input, .admin-filters select, .admin-filters button {
     width: 100% !important;
     max-width: 100% !important;
   }
 }
+
+@media (max-width: 640px) {
+  .admin-table th, .admin-table td {
+    padding: 8px 10px !important;
+    font-size: 0.8rem !important;
+  }
+
+  .admin-main-content {
+    padding: 12px 10px !important;
+  }
+
+  /* Compact Action Buttons on Phones */
+  .admin-table td button {
+    padding: 3px 6px !important;
+    font-size: 0.72rem !important;
+  }
+}
+
