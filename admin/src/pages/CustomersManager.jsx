@@ -368,7 +368,7 @@ const CustomersManager = () => {
               </tr>
             </thead>
             <tbody>
-              {filteredCustomers.map((c) => {
+              {filteredCustomers.map((c, index) => {
                 const isBlocked = Boolean(c.is_blocked);
                 const initials = (c.name || 'C')
                   .split(' ')
@@ -387,7 +387,7 @@ const CustomersManager = () => {
                       transition: 'background-color 0.15s ease'
                     }}
                   >
-                    {/* Customer ID Badge */}
+                    {/* Customer Row Index Badge */}
                     <td style={{ textAlign: 'center' }}>
                       <span style={{
                         display: 'inline-block',
@@ -400,7 +400,7 @@ const CustomersManager = () => {
                         color: '#334155',
                         fontFamily: 'monospace'
                       }}>
-                        #{c.id}
+                        #{index + 1}
                       </span>
                     </td>
 

@@ -399,8 +399,8 @@ const ProductsManager = () => {
       {loading ? (
         <div style={{ padding: '40px', textAlign: 'center', color: '#64748b' }}>Loading products...</div>
       ) : (
-        <div className="admin-table-container" style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-          <table className="admin-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+        <div className="admin-table-container" style={{ background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+          <table className="admin-table" style={{ width: '100%', minWidth: '720px', borderCollapse: 'collapse' }}>
             <thead>
               <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0' }}>
                 <th style={{ padding: '12px 18px', textAlign: 'left', fontWeight: '600', fontSize: '0.82rem', color: '#475569', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Product</th>
