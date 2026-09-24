@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useLocation, Link } from 'react-router-dom';
 import { Search, Truck, Package, CheckCircle2, MapPin, Copy, Check, AlertCircle, ArrowLeft } from 'lucide-react';
 import { API_URL } from '../utils/api';
+import { replaceWithFallbackImage } from '../utils/productImage';
 
 const STAGES = [
   { key: 'confirmed', label: 'Order Confirmed', icon: CheckCircle2, desc: 'Order received and confirmed' },
@@ -211,76 +212,78 @@ const TrackOrder = () => {
               <div style={{ margin: '30px 0 40px' }}>
                 <h4 style={{ marginBottom: '25px', color: '#222' }}>Live Shipment Progress</h4>
                 
-                <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', padding: '0 10px' }}>
-                  {/* Background Progress Bar */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '20px',
-                    left: '40px',
-                    right: '40px',
-                    height: '4px',
-                    background: '#e5e7eb',
-                    zIndex: 1
-                  }} />
+                <div className="tracking-stepper-scroll" style={{ padding: '0 5px 10px' }}>
+                  <div className="tracking-stepper-inner" style={{ display: 'flex', justifyContent: 'space-between', position: 'relative', padding: '0 10px' }}>
+                    {/* Background Progress Bar */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '20px',
+                      left: '40px',
+                      right: '40px',
+                      height: '4px',
+                      background: '#e5e7eb',
+                      zIndex: 1
+                    }} />
 
-                  {/* Active Progress Bar Fill */}
-                  <div style={{
-                    position: 'absolute',
-                    top: '20px',
-                    left: '40px',
-                    width: `${(currentStage / (STAGES.length - 1)) * 100}%`,
-                    maxWidth: 'calc(100% - 80px)',
-                    height: '4px',
-                    background: '#468165',
-                    transition: 'width 0.4s ease',
-                    zIndex: 2
-                  }} />
+                    {/* Active Progress Bar Fill */}
+                    <div style={{
+                      position: 'absolute',
+                      top: '20px',
+                      left: '40px',
+                      width: `${(currentStage / (STAGES.length - 1)) * 100}%`,
+                      maxWidth: 'calc(100% - 80px)',
+                      height: '4px',
+                      background: '#468165',
+                      transition: 'width 0.4s ease',
+                      zIndex: 2
+                    }} />
 
-                  {STAGES.map((stage, idx) => {
-                    const isDone = idx <= currentStage;
-                    const isCurrent = idx === currentStage;
-                    const Icon = stage.icon;
+                    {STAGES.map((stage, idx) => {
+                      const isDone = idx <= currentStage;
+                      const isCurrent = idx === currentStage;
+                      const Icon = stage.icon;
 
-                    return (
-                      <div 
-                        key={stage.key} 
-                        style={{ 
-                          display: 'flex', 
-                          flexDirection: 'column', 
-                          alignItems: 'center', 
-                          position: 'relative', 
-                          zIndex: 3,
-                          width: '80px',
-                          textAlign: 'center'
-                        }}
-                      >
-                        <div style={{
-                          width: '42px',
-                          height: '42px',
-                          borderRadius: '50%',
-                          background: isDone ? '#468165' : '#fff',
-                          border: `2.5px solid ${isDone ? '#468165' : '#cbd5e1'}`,
-                          color: isDone ? '#fff' : '#94a3b8',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          boxShadow: isCurrent ? '0 0 0 4px rgba(70, 129, 101, 0.2)' : 'none',
-                          marginBottom: '8px',
-                          transition: 'all 0.3s ease'
-                        }}>
-                          <Icon size={18} />
+                      return (
+                        <div 
+                          key={stage.key} 
+                          style={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            alignItems: 'center', 
+                            position: 'relative', 
+                            zIndex: 3,
+                            width: '80px',
+                            textAlign: 'center'
+                          }}
+                        >
+                          <div style={{
+                            width: '42px',
+                            height: '42px',
+                            borderRadius: '50%',
+                            background: isDone ? '#468165' : '#fff',
+                            border: `2.5px solid ${isDone ? '#468165' : '#cbd5e1'}`,
+                            color: isDone ? '#fff' : '#94a3b8',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            boxShadow: isCurrent ? '0 0 0 4px rgba(70, 129, 101, 0.2)' : 'none',
+                            marginBottom: '8px',
+                            transition: 'all 0.3s ease'
+                          }}>
+                            <Icon size={18} />
+                          </div>
+                          <span style={{ 
+                            fontSize: '12px', 
+                            fontWeight: isDone ? '600' : '400',
+                            color: isDone ? '#1e293b' : '#94a3b8',
+                            lineHeight: '1.2'
+                          }}>
+                            {stage.label}
+                          </span>
                         </div>
-                        <span style={{ 
-                          fontSize: '12px', 
-                          fontWeight: isDone ? '600' : '400',
-                          color: isDone ? '#1e293b' : '#94a3b8',
-                          lineHeight: '1.2'
-                        }}>
-                          {stage.label}
-                        </span>
-                      </div>
-                    );
-                  })}
+                      );
+                    })}
+                  </div>
                 </div>
               </div>
             ) : (
@@ -301,15 +304,16 @@ const TrackOrder = () => {
                         <img 
                           src={item.image} 
                           alt={item.title} 
+                          onError={(e) => replaceWithFallbackImage(e, item.id || item.product_id)}
                           style={{ width: '50px', height: '50px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #ddd' }} 
                         />
                       )}
                       <div style={{ flex: 1 }}>
                         <div style={{ fontWeight: '500', fontSize: '14px' }}>{item.title}</div>
-                        <div style={{ fontSize: '12px', color: '#666' }}>Qty: {item.quantity} × ${parseFloat(item.price_at_purchase).toFixed(2)}</div>
+                        <div style={{ fontSize: '12px', color: '#666' }}>Qty: {item.quantity} × ₹{parseFloat(item.price_at_purchase).toFixed(2)}</div>
                       </div>
                       <div style={{ fontWeight: '600', fontSize: '14px' }}>
-                        ${(parseFloat(item.price_at_purchase) * item.quantity).toFixed(2)}
+                        ₹{(parseFloat(item.price_at_purchase) * item.quantity).toFixed(2)}
                       </div>
                     </div>
                   ))}
@@ -322,7 +326,7 @@ const TrackOrder = () => {
                 <ArrowLeft size={16} /> Continue Shopping
               </Link>
               <span style={{ fontSize: '14px', color: '#468165', fontWeight: 'bold' }}>
-                Total Paid: ${parseFloat(order.total).toFixed(2)}
+                Total Paid: ₹{parseFloat(order.total).toFixed(2)}
               </span>
             </div>
 

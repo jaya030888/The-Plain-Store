@@ -92,7 +92,7 @@ exports.createOrder = async (req, res) => {
       }
       if (subtotal < parseFloat(coupon.min_order_amount || 0)) {
         await conn.rollback();
-        return res.status(400).json({ message: `Minimum order amount is $${coupon.min_order_amount}` });
+        return res.status(400).json({ message: `Minimum order amount is ₹${coupon.min_order_amount}` });
       }
       if (coupon.applies_to === 'specific') {
         const [cpRows] = await conn.query(
@@ -171,9 +171,14 @@ exports.getMyOrders = async (req, res) => {
   try {
     const userId = req.user.id;
     
-    // Single consolidated query eliminating N+1 queries
+    // Single consolidated query eliminating N+1 queries with explicit projection
     const [orders] = await db.query(`
-      SELECT o.*,
+      SELECT 
+        o.id, o.user_id, o.address_id, o.subtotal, o.delivery_fee, o.total, 
+        o.coupon_id, o.discount_amount, o.payment_status, o.payment_method, 
+        o.order_status, o.tracking_number, o.carrier, o.estimated_delivery, 
+        o.return_status, o.return_reason, o.return_requested_at, o.return_notes, 
+        o.created_at, o.updated_at,
         COALESCE(
           json_agg(
             json_build_object(
@@ -211,21 +216,26 @@ exports.getMyOrderById = async (req, res) => {
     const { id } = req.params;
 
     const [orders] = await db.query(`
-      SELECT o.*, 
-             a.full_name, a.phone, a.house_flat, a.street, a.area, a.city, a.state, a.pincode,
-             COALESCE(
-               json_agg(
-                 json_build_object(
-                   'id', oi.id,
-                   'order_id', oi.order_id,
-                   'product_id', oi.product_id,
-                   'quantity', oi.quantity,
-                   'price_at_purchase', oi.price_at_purchase,
-                   'title', p.name,
-                   'image', pimg.image_url
-                 ) ORDER BY oi.id ASC
-               ) FILTER (WHERE oi.id IS NOT NULL), '[]'::json
-             ) AS items
+      SELECT 
+        o.id, o.user_id, o.address_id, o.subtotal, o.delivery_fee, o.total, 
+        o.coupon_id, o.discount_amount, o.payment_status, o.payment_method, 
+        o.order_status, o.tracking_number, o.carrier, o.estimated_delivery, 
+        o.return_status, o.return_reason, o.return_requested_at, o.return_notes, 
+        o.created_at, o.updated_at,
+        a.full_name, a.phone, a.house_flat, a.street, a.area, a.city, a.state, a.pincode,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', oi.id,
+              'order_id', oi.order_id,
+              'product_id', oi.product_id,
+              'quantity', oi.quantity,
+              'price_at_purchase', oi.price_at_purchase,
+              'title', p.name,
+              'image', pimg.image_url
+            ) ORDER BY oi.id ASC
+          ) FILTER (WHERE oi.id IS NOT NULL), '[]'::json
+        ) AS items
       FROM orders o
       JOIN addresses a ON o.address_id = a.id
       LEFT JOIN order_items oi ON o.id = oi.order_id
@@ -250,23 +260,28 @@ exports.getAllOrders = async (req, res) => {
   try {
     // Single consolidated query eliminating N+1 queries for all orders
     const [orders] = await db.query(`
-      SELECT o.*, 
-             COALESCE(u.name, a.full_name, 'Guest Customer') as customer_name, 
-             COALESCE(u.email, 'Guest Checkout') as customer_email,
-             a.phone as customer_phone,
-             COALESCE(
-               json_agg(
-                 json_build_object(
-                   'id', oi.id,
-                   'order_id', oi.order_id,
-                   'product_id', oi.product_id,
-                   'quantity', oi.quantity,
-                   'price_at_purchase', oi.price_at_purchase,
-                   'title', p.name,
-                   'image', pimg.image_url
-                 ) ORDER BY oi.id ASC
-               ) FILTER (WHERE oi.id IS NOT NULL), '[]'::json
-             ) AS items
+      SELECT 
+        o.id, o.user_id, o.address_id, o.subtotal, o.delivery_fee, o.total, 
+        o.coupon_id, o.discount_amount, o.payment_status, o.payment_method, 
+        o.order_status, o.tracking_number, o.carrier, o.estimated_delivery, 
+        o.return_status, o.return_reason, o.return_requested_at, o.return_notes, 
+        o.created_at, o.updated_at,
+        COALESCE(u.name, a.full_name, 'Guest Customer') as customer_name, 
+        COALESCE(u.email, 'Guest Checkout') as customer_email,
+        a.phone as customer_phone,
+        COALESCE(
+          json_agg(
+            json_build_object(
+              'id', oi.id,
+              'order_id', oi.order_id,
+              'product_id', oi.product_id,
+              'quantity', oi.quantity,
+              'price_at_purchase', oi.price_at_purchase,
+              'title', p.name,
+              'image', pimg.image_url
+            ) ORDER BY oi.id ASC
+          ) FILTER (WHERE oi.id IS NOT NULL), '[]'::json
+        ) AS items
       FROM orders o
       LEFT JOIN users u ON o.user_id = u.id
       LEFT JOIN addresses a ON o.address_id = a.id
@@ -299,10 +314,15 @@ exports.getOrderDetails = async (req, res) => {
   try {
     const { id } = req.params;
     const [orders] = await db.query(`
-      SELECT o.*, 
-             COALESCE(u.name, a.full_name, 'Guest Customer') as customer_name, 
-             COALESCE(u.email, 'Guest Checkout') as customer_email,
-             a.full_name, a.phone, a.house_flat, a.street, a.area, a.city, a.state, a.pincode
+      SELECT 
+        o.id, o.user_id, o.address_id, o.subtotal, o.delivery_fee, o.total, 
+        o.coupon_id, o.discount_amount, o.payment_status, o.payment_method, 
+        o.order_status, o.tracking_number, o.carrier, o.estimated_delivery, 
+        o.return_status, o.return_reason, o.return_requested_at, o.return_notes, 
+        o.created_at, o.updated_at,
+        COALESCE(u.name, a.full_name, 'Guest Customer') as customer_name, 
+        COALESCE(u.email, 'Guest Checkout') as customer_email,
+        a.full_name, a.phone, a.house_flat, a.street, a.area, a.city, a.state, a.pincode
       FROM orders o
       LEFT JOIN users u ON o.user_id = u.id
       LEFT JOIN addresses a ON o.address_id = a.id
@@ -417,6 +437,9 @@ exports.requestReturn = async (req, res) => {
 
     if (!reason || !reason.trim()) {
       return res.status(400).json({ message: 'Return reason is required' });
+    }
+    if (!details || !details.trim()) {
+      return res.status(400).json({ message: 'Additional details / condition of product is required' });
     }
 
     const [orders] = await db.query(

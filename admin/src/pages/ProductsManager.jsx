@@ -1,7 +1,7 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import AdminLayout from '../components/AdminLayout';
 import { useAuth } from '../context/AuthContext';
-import { Plus, Edit, Trash2, X, Check, Tag, RotateCcw, PackageCheck, Award, AlertCircle, Search } from 'lucide-react';
+import { Plus, Edit, Trash2, X, Check, Tag, RotateCcw, PackageCheck, Award, AlertCircle, Search, Image as ImageIcon, Upload } from 'lucide-react';
 import { replaceWithFallbackImage } from '../utils/productImage';
 
 const ProductsManager = () => {
@@ -12,10 +12,56 @@ const ProductsManager = () => {
   
   const [showModal, setShowModal] = useState(false);
   const [editingId, setEditingId] = useState(null);
+  const [modalError, setModalError] = useState('');
+  const fileInputRef = useRef(null);
   const [formData, setFormData] = useState({
-    name: '', slug: '', description: '', price: '', discount_price: '', category_id: '', stock: '', is_featured: false, is_on_sale: false,
+    name: '', slug: '', description: '', price: '', discount_price: '', image_url: '', category_id: '', stock: '', is_featured: false, is_on_sale: false,
     is_returnable: true, return_window_days: 7, is_open_box_delivery: false, badge: ''
   });
+
+  const handleImageFileUpload = (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setModalError('Please select a valid image file (JPG, PNG, WebP, SVG, etc.).');
+      return;
+    }
+
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const rawDataUrl = event.target.result;
+      const img = new Image();
+      img.onload = () => {
+        const maxDim = 1200;
+        let width = img.width;
+        let height = img.height;
+        if (width > maxDim || height > maxDim) {
+          if (width > height) {
+            height = Math.round((height * maxDim) / width);
+            width = maxDim;
+          } else {
+            width = Math.round((width * maxDim) / height);
+            height = maxDim;
+          }
+        }
+        const canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, width, height);
+        const optimizedDataUrl = canvas.toDataURL('image/jpeg', 0.85);
+        setFormData(prev => ({ ...prev, image_url: optimizedDataUrl }));
+        setModalError('');
+      };
+      img.onerror = () => {
+        setFormData(prev => ({ ...prev, image_url: rawDataUrl }));
+        setModalError('');
+      };
+      img.src = rawDataUrl;
+    };
+    reader.readAsDataURL(file);
+  };
 
   // State to track inline stock editing and saved feedback
   const [stockEdits, setStockEdits] = useState({});
@@ -65,17 +111,19 @@ const ProductsManager = () => {
   }, []);
 
   const handleOpenModal = (p = null) => {
+    setModalError('');
     if (p) {
       setEditingId(p.id);
       const cat = categories.find(c => c.name === p.category);
       setFormData({
-        name: p.title,
-        slug: p.slug,
-        description: p.description,
-        price: p.rawPrice,
-        discount_price: p.rawDiscountPrice ?? (p.discountPrice ? parseFloat(p.discountPrice.replace('$', '')) : ''),
+        name: p.title || p.name || '',
+        slug: p.slug || '',
+        description: p.description || '',
+        price: p.rawPrice !== undefined ? p.rawPrice : (p.price ? String(p.price).replace(/[^0-9.]/g, '') : ''),
+        discount_price: p.rawDiscountPrice ?? (p.discountPrice ? parseFloat(String(p.discountPrice).replace(/[^0-9.]/g, '')) : ''),
+        image_url: p.image || '',
         category_id: cat ? cat.id : '',
-        stock: p.stock,
+        stock: p.stock ?? '',
         is_featured: p.isFeatured || false,
         is_on_sale: Boolean(p.isOnSale || p.is_on_sale),
         is_returnable: p.is_returnable !== undefined ? Boolean(p.is_returnable) : (p.isReturnable !== undefined ? Boolean(p.isReturnable) : true),
@@ -86,7 +134,7 @@ const ProductsManager = () => {
     } else {
       setEditingId(null);
       setFormData({
-        name: '', slug: '', description: '', price: '', discount_price: '', category_id: '', stock: '', is_featured: false, is_on_sale: false,
+        name: '', slug: '', description: '', price: '', discount_price: '', image_url: '', category_id: '', stock: '', is_featured: false, is_on_sale: false,
         is_returnable: true, return_window_days: 7, is_open_box_delivery: false, badge: ''
       });
     }
@@ -95,6 +143,35 @@ const ProductsManager = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
+    setModalError('');
+
+    // Constraint: Regular Price cannot be negative
+    const priceNum = parseFloat(formData.price);
+    if (isNaN(priceNum) || priceNum < 0) {
+      setModalError('Product regular price cannot be negative.');
+      return;
+    }
+
+    // Constraint: Discount Price cannot be negative and cannot be greater than Regular Price
+    let discountNum = null;
+    if (formData.discount_price !== '' && formData.discount_price !== null && formData.discount_price !== undefined) {
+      discountNum = parseFloat(formData.discount_price);
+      if (isNaN(discountNum) || discountNum < 0) {
+        setModalError('Discount price cannot be negative.');
+        return;
+      }
+      if (discountNum > priceNum) {
+        setModalError(`Discount price (₹${discountNum}) cannot be greater than regular price (₹${priceNum}).`);
+        return;
+      }
+    }
+
+    // Constraint: Product image is required when adding a product
+    if (!editingId && (!formData.image_url || !formData.image_url.trim())) {
+      setModalError('Product Image URL is required when adding a new product.');
+      return;
+    }
+
     try {
       const url = editingId 
         ? `${import.meta.env.VITE_API_URL || 'http://localhost:5000'}/api/products/${editingId}` 
@@ -104,9 +181,11 @@ const ProductsManager = () => {
       const windowDays = parseInt(formData.return_window_days, 10) || 7;
       const payload = {
         ...formData,
-        discount_price: formData.discount_price === '' ? null : formData.discount_price,
+        price: priceNum,
+        discount_price: discountNum,
+        image_url: formData.image_url ? formData.image_url.trim() : null,
         category_id: formData.category_id === '' ? null : formData.category_id,
-        is_on_sale: Boolean(formData.is_on_sale),
+        is_on_sale: Boolean(formData.is_on_sale || (discountNum !== null && discountNum < priceNum)),
         is_returnable: isReturnableBool,
         return_window_days: windowDays,
         return_policy_type: isReturnableBool ? `${windowDays} Days Returnable` : 'Non-Returnable',
@@ -124,9 +203,13 @@ const ProductsManager = () => {
       if (res.ok) {
         setShowModal(false);
         fetchProducts();
+      } else {
+        const data = await res.json().catch(() => ({}));
+        setModalError(data.message || data.error || 'Failed to save product');
       }
     } catch (error) {
       console.error(error);
+      setModalError(error.message || 'Network error saving product');
     }
   };
 
@@ -204,7 +287,7 @@ const ProductsManager = () => {
               isOnSale: isOnSale,
               is_on_sale: isOnSale,
               rawDiscountPrice: isOnSale ? parseFloat(discountPrice) : null,
-              discountPrice: isOnSale && discountPrice ? `$${discountPrice}` : null
+              discountPrice: isOnSale && discountPrice ? `₹${discountPrice}` : null
             };
           }
           return p;
@@ -575,7 +658,7 @@ const ProductsManager = () => {
 
             <div style={{ marginBottom: '15px' }}>
               <label style={{ display: 'block', fontSize: '0.85rem', fontWeight: '600', color: '#334155', marginBottom: '6px' }}>
-                Sale Discount Price ($)
+                Sale Discount Price (₹)
               </label>
               <input
                 type="number"
@@ -584,9 +667,19 @@ const ProductsManager = () => {
                 max={saleDialogProduct.rawPrice}
                 value={saleDiscountInput}
                 onChange={e => setSaleDiscountInput(e.target.value)}
-                style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '1rem', fontWeight: '600' }}
+                style={{ width: '100%', padding: '10px 12px', borderRadius: '6px', border: (saleDiscountInput !== '' && (parseFloat(saleDiscountInput) < 0 || parseFloat(saleDiscountInput) > saleDialogProduct.rawPrice)) ? '1px solid #ef4444' : '1px solid #cbd5e1', fontSize: '1rem', fontWeight: '600' }}
               />
-              {saleDiscountInput && parseFloat(saleDiscountInput) < saleDialogProduct.rawPrice && (
+              {saleDiscountInput !== '' && parseFloat(saleDiscountInput) < 0 && (
+                <span style={{ display: 'block', marginTop: '6px', fontSize: '0.8rem', color: '#dc2626', fontWeight: '500' }}>
+                  Discount price cannot be negative.
+                </span>
+              )}
+              {saleDiscountInput !== '' && parseFloat(saleDiscountInput) > saleDialogProduct.rawPrice && (
+                <span style={{ display: 'block', marginTop: '6px', fontSize: '0.8rem', color: '#dc2626', fontWeight: '500' }}>
+                  Discount cannot exceed item regular price (₹{saleDialogProduct.rawPrice}).
+                </span>
+              )}
+              {saleDiscountInput !== '' && parseFloat(saleDiscountInput) >= 0 && parseFloat(saleDiscountInput) <= saleDialogProduct.rawPrice && (
                 <span style={{ display: 'block', marginTop: '6px', fontSize: '0.8rem', color: '#16a34a', fontWeight: '600' }}>
                   {Math.round((1 - parseFloat(saleDiscountInput) / saleDialogProduct.rawPrice) * 100)}% Discount to shoppers!
                 </span>
@@ -603,8 +696,20 @@ const ProductsManager = () => {
               </button>
               <button
                 type="button"
+                disabled={!saleDiscountInput || parseFloat(saleDiscountInput) < 0 || parseFloat(saleDiscountInput) > saleDialogProduct.rawPrice}
                 onClick={() => executeQuickSaleUpdate(saleDialogProduct.id, true, saleDiscountInput)}
-                style={{ padding: '9px 18px', backgroundColor: '#8F422E', color: '#fff', border: 'none', borderRadius: '6px', cursor: 'pointer', fontWeight: '600', display: 'flex', alignItems: 'center', gap: '6px' }}
+                style={{
+                  padding: '9px 18px',
+                  backgroundColor: (!saleDiscountInput || parseFloat(saleDiscountInput) < 0 || parseFloat(saleDiscountInput) > saleDialogProduct.rawPrice) ? '#cbd5e1' : '#8F422E',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: '6px',
+                  cursor: (!saleDiscountInput || parseFloat(saleDiscountInput) < 0 || parseFloat(saleDiscountInput) > saleDialogProduct.rawPrice) ? 'not-allowed' : 'pointer',
+                  fontWeight: '600',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '6px'
+                }}
               >
                 <Tag size={15} /> Enable Sale
               </button>
@@ -617,40 +722,235 @@ const ProductsManager = () => {
       {showModal && (
         <div className="modal-overlay" onClick={() => setShowModal(false)} style={{ position: 'fixed', inset: 0, backgroundColor: 'rgba(0,0,0,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'center', zIndex: 1000, padding: '20px' }}>
           <div onClick={e => e.stopPropagation()} style={{ backgroundColor: '#fff', padding: '30px', borderRadius: '12px', width: '100%', maxWidth: '700px', maxHeight: '90vh', overflowY: 'auto' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '20px' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '15px' }}>
               <h2 style={{ margin: 0, color: '#1e293b' }}>{editingId ? 'Edit Product' : 'Add Product'}</h2>
               <button onClick={() => setShowModal(false)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}><X /></button>
             </div>
+
+            {/* Error Banner */}
+            {modalError && (
+              <div style={{
+                backgroundColor: '#fef2f2',
+                border: '1px solid #fecaca',
+                color: '#991b1b',
+                padding: '12px 16px',
+                borderRadius: '8px',
+                marginBottom: '18px',
+                fontSize: '0.88rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px'
+              }}>
+                <AlertCircle size={18} style={{ flexShrink: 0 }} />
+                <span>{modalError}</span>
+              </div>
+            )}
+
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}>
+              {/* Product Image Field with Device Upload & URL */}
+              <div style={{ border: '1px solid #e2e8f0', borderRadius: '8px', padding: '14px', backgroundColor: '#f8fafc' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', flexWrap: 'wrap', gap: '8px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '6px', fontWeight: '600', fontSize: '0.85rem', color: '#1e293b' }}>
+                    <ImageIcon size={16} color="#8F422E" /> Product Image {!editingId && <span style={{ color: '#dc2626' }}>* (Required)</span>}
+                  </label>
+                  
+                  {/* Upload from Device Button */}
+                  <div>
+                    <input
+                      type="file"
+                      ref={fileInputRef}
+                      accept="image/*"
+                      style={{ display: 'none' }}
+                      onChange={handleImageFileUpload}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => fileInputRef.current?.click()}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '6px',
+                        padding: '5px 12px',
+                        borderRadius: '6px',
+                        border: '1px solid #468165',
+                        background: '#468165',
+                        color: '#ffffff',
+                        fontSize: '0.78rem',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        boxShadow: '0 1px 2px rgba(70, 129, 101, 0.2)',
+                        transition: 'all 0.15s ease'
+                      }}
+                    >
+                      <Upload size={14} /> Upload from Device
+                    </button>
+                  </div>
+                </div>
+
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+                  <input
+                    type="text"
+                    required={!editingId}
+                    placeholder="Paste image URL or click 'Upload from Device' above"
+                    value={formData.image_url ? (formData.image_url.startsWith('data:') ? '[Uploaded Image from Device]' : formData.image_url) : ''}
+                    onChange={e => setFormData({ ...formData, image_url: e.target.value })}
+                    style={{ flex: 1, padding: '10px 12px', borderRadius: '6px', border: '1px solid #cbd5e1', fontSize: '0.88rem', backgroundColor: '#fff' }}
+                  />
+                  {formData.image_url ? (
+                    <div style={{ position: 'relative', flexShrink: 0 }}>
+                      <img 
+                        src={formData.image_url} 
+                        alt="Preview" 
+                        onError={replaceWithFallbackImage}
+                        style={{ width: '48px', height: '48px', objectFit: 'cover', borderRadius: '6px', border: '1px solid #cbd5e1', display: 'block' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setFormData({ ...formData, image_url: '' });
+                          if (fileInputRef.current) fileInputRef.current.value = '';
+                        }}
+                        title="Remove image"
+                        style={{
+                          position: 'absolute',
+                          top: '-6px',
+                          right: '-6px',
+                          background: '#ef4444',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '50%',
+                          width: '18px',
+                          height: '18px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          cursor: 'pointer',
+                          fontSize: '10px',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.2)'
+                        }}
+                      >
+                        <X size={10} />
+                      </button>
+                    </div>
+                  ) : (
+                    <div style={{ width: '48px', height: '48px', borderRadius: '6px', border: '1px dashed #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#f1f5f9', color: '#94a3b8', flexShrink: 0 }}>
+                      <ImageIcon size={20} />
+                    </div>
+                  )}
+                </div>
+
+                {/* Quick preset chips */}
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '10px', alignItems: 'center' }}>
+                  <span style={{ fontSize: '0.75rem', color: '#64748b' }}>Quick Presets:</span>
+                  {[
+                    { label: 'Ceramic Vase', url: '/ceramic_vase_set.jpg' },
+                    { label: 'Jewellery Box', url: '/wooden_jewellery_box.jpg' },
+                    { label: 'Brass Planter', url: '/brass_planter.jpg' },
+                    { label: 'Wall Art', url: '/minimalist_wall_art.jpg' },
+                    { label: 'Cushion Cover', url: '/linen_cushion_cover.jpg' }
+                  ].map(preset => (
+                    <button
+                      key={preset.url}
+                      type="button"
+                      onClick={() => setFormData({ ...formData, image_url: preset.url })}
+                      style={{
+                        fontSize: '0.72rem',
+                        padding: '3px 8px',
+                        borderRadius: '4px',
+                        border: '1px solid #cbd5e1',
+                        backgroundColor: formData.image_url === preset.url ? '#fbeae5' : '#fff',
+                        color: formData.image_url === preset.url ? '#8F422E' : '#475569',
+                        cursor: 'pointer',
+                        fontWeight: formData.image_url === preset.url ? '600' : 'normal'
+                      }}
+                    >
+                      {preset.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 <div>
-                  <label style={{ fontWeight: '500', fontSize: '0.85rem' }}>Product Name</label>
+                  <label style={{ fontWeight: '500', fontSize: '0.85rem' }}>Product Name <span style={{ color: '#dc2626' }}>*</span></label>
                   <input required type="text" value={formData.name} onChange={e => {
                     setFormData({ ...formData, name: e.target.value, slug: e.target.value.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)+/g, '') })
                   }} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd', marginTop: '5px' }} />
                 </div>
                 <div>
-                  <label style={{ fontWeight: '500', fontSize: '0.85rem' }}>Slug</label>
+                  <label style={{ fontWeight: '500', fontSize: '0.85rem' }}>Slug <span style={{ color: '#dc2626' }}>*</span></label>
                   <input required type="text" value={formData.slug} onChange={e => setFormData({...formData, slug: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd', marginTop: '5px' }} />
                 </div>
               </div>
 
               <div>
                 <label style={{ fontWeight: '500', fontSize: '0.85rem' }}>Description</label>
-                <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd', marginTop: '5px', minHeight: '90px' }}></textarea>
+                <textarea required value={formData.description} onChange={e => setFormData({...formData, description: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd', marginTop: '5px', minHeight: '80px' }}></textarea>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '15px' }}>
                 <div>
-                  <label style={{ fontWeight: '500', fontSize: '0.85rem' }}>Regular Price ($)</label>
-                  <input required type="number" step="0.01" value={formData.price} onChange={e => setFormData({...formData, price: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd', marginTop: '5px' }} />
+                  <label style={{ fontWeight: '500', fontSize: '0.85rem' }}>
+                    Regular Price (₹) <span style={{ color: '#dc2626' }}>*</span>
+                  </label>
+                  <input 
+                    required 
+                    type="number" 
+                    step="0.01" 
+                    min="0"
+                    placeholder="0.00"
+                    value={formData.price} 
+                    onChange={e => setFormData({...formData, price: e.target.value})} 
+                    style={{ 
+                      width: '100%', 
+                      padding: '10px', 
+                      borderRadius: '6px', 
+                      border: formData.price !== '' && parseFloat(formData.price) < 0 ? '1px solid #ef4444' : '1px solid #ddd', 
+                      marginTop: '5px' 
+                    }} 
+                  />
+                  {formData.price !== '' && parseFloat(formData.price) < 0 && (
+                    <span style={{ fontSize: '0.75rem', color: '#dc2626', display: 'block', marginTop: '3px' }}>
+                      Price cannot be negative
+                    </span>
+                  )}
                 </div>
                 <div>
-                  <label style={{ fontWeight: '500', fontSize: '0.85rem' }}>Discount Price ($)</label>
-                  <input type="number" step="0.01" value={formData.discount_price} onChange={e => setFormData({...formData, discount_price: e.target.value})} placeholder="Optional" style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd', marginTop: '5px' }} />
+                  <label style={{ fontWeight: '500', fontSize: '0.85rem' }}>Discount Price (₹)</label>
+                  <input 
+                    type="number" 
+                    step="0.01" 
+                    min="0"
+                    max={formData.price && parseFloat(formData.price) >= 0 ? formData.price : undefined}
+                    value={formData.discount_price} 
+                    onChange={e => setFormData({...formData, discount_price: e.target.value})} 
+                    placeholder="Optional" 
+                    style={{ 
+                      width: '100%', 
+                      padding: '10px', 
+                      borderRadius: '6px', 
+                      border: (formData.discount_price !== '' && (parseFloat(formData.discount_price) < 0 || (formData.price !== '' && parseFloat(formData.discount_price) > parseFloat(formData.price)))) ? '1px solid #ef4444' : '1px solid #ddd', 
+                      marginTop: '5px' 
+                    }} 
+                  />
+                  {formData.discount_price !== '' && parseFloat(formData.discount_price) < 0 && (
+                    <span style={{ fontSize: '0.75rem', color: '#dc2626', display: 'block', marginTop: '3px' }}>
+                      Discount cannot be negative
+                    </span>
+                  )}
+                  {formData.discount_price !== '' && formData.price !== '' && parseFloat(formData.discount_price) > parseFloat(formData.price) && (
+                    <span style={{ fontSize: '0.75rem', color: '#dc2626', display: 'block', marginTop: '3px' }}>
+                      Discount cannot exceed regular price (₹{formData.price})
+                    </span>
+                  )}
+                  {formData.discount_price !== '' && formData.price !== '' && parseFloat(formData.discount_price) >= 0 && parseFloat(formData.discount_price) <= parseFloat(formData.price) && parseFloat(formData.price) > 0 && (
+                    <span style={{ fontSize: '0.75rem', color: '#16a34a', display: 'block', marginTop: '3px', fontWeight: '500' }}>
+                      {Math.round((1 - parseFloat(formData.discount_price) / parseFloat(formData.price)) * 100)}% off
+                    </span>
+                  )}
                 </div>
                 <div>
-                  <label style={{ fontWeight: '500', fontSize: '0.85rem' }}>Stock Quantity</label>
+                  <label style={{ fontWeight: '500', fontSize: '0.85rem' }}>Stock Quantity <span style={{ color: '#dc2626' }}>*</span></label>
                   <input required type="number" min="0" value={formData.stock} onChange={e => setFormData({...formData, stock: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #ddd', marginTop: '5px' }} />
                 </div>
               </div>

@@ -26,7 +26,21 @@ async function initCouponsDb() {
       );
     `);
 
-    console.log('Coupons schema updated successfully!');
+    // Seed default coupons including PLAIN20
+    await db.query(`
+      INSERT INTO coupons (code, discount_type, discount_value, min_order_amount, expiry_date, is_active, applies_to)
+      VALUES 
+        ('PLAIN20', 'percentage', 20.00, 0.00, '2035-12-31', TRUE, 'all'),
+        ('WELCOME10', 'percentage', 10.00, 0.00, '2035-12-31', TRUE, 'all'),
+        ('FLAT50', 'fixed', 50.00, 100.00, '2035-12-31', TRUE, 'all')
+      ON CONFLICT (code) DO UPDATE SET 
+        discount_type = EXCLUDED.discount_type,
+        discount_value = EXCLUDED.discount_value,
+        is_active = TRUE,
+        applies_to = EXCLUDED.applies_to;
+    `);
+
+    console.log('Coupons schema and default coupons (PLAIN20) initialized successfully!');
     process.exit(0);
   } catch (error) {
     console.error('Error updating coupons schema:', error);

@@ -110,8 +110,8 @@ const CouponsManager = () => {
               {coupons.map(c => (
                 <tr key={c.id} style={{ borderBottom: '1px solid #eee' }}>
                   <td style={{ padding: '15px 20px', fontWeight: 'bold' }}>{c.code}</td>
-                  <td style={{ padding: '15px 20px' }}>{c.discount_type === 'percentage' ? `${c.discount_value}%` : `$${c.discount_value}`}</td>
-                  <td style={{ padding: '15px 20px' }}>${c.min_order_amount}</td>
+                  <td style={{ padding: '15px 20px' }}>{c.discount_type === 'percentage' ? `${c.discount_value}%` : `₹${c.discount_value}`}</td>
+                  <td style={{ padding: '15px 20px' }}>₹{c.min_order_amount}</td>
                   <td style={{ padding: '15px 20px' }}>{c.expiry_date ? new Date(c.expiry_date).toLocaleDateString() : 'Never'}</td>
                   <td style={{ padding: '15px 20px' }}>
                     <span style={{ padding: '4px 8px', borderRadius: '12px', fontSize: '12px', background: c.is_active ? '#e6f3ed' : '#f8d7da', color: c.is_active ? '#468165' : '#721c24' }}>
@@ -146,7 +146,7 @@ const CouponsManager = () => {
                   <label>Discount Type</label>
                   <select value={formData.discount_type} onChange={e => setFormData({...formData, discount_type: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd', marginTop: '5px' }}>
                     <option value="percentage">Percentage (%)</option>
-                    <option value="fixed">Fixed Amount ($)</option>
+                    <option value="fixed">Fixed Amount (₹)</option>
                   </select>
                 </div>
                 <div>
@@ -156,7 +156,7 @@ const CouponsManager = () => {
               </div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px' }}>
                 <div>
-                  <label>Min Order Amount ($)</label>
+                  <label>Min Order Amount (₹)</label>
                   <input type="number" step="0.01" value={formData.min_order_amount} onChange={e => setFormData({...formData, min_order_amount: e.target.value})} style={{ width: '100%', padding: '10px', borderRadius: '4px', border: '1px solid #ddd', marginTop: '5px' }} />
                 </div>
                 <div>

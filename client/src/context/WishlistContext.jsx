@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { API_URL } from '../utils/api';
 
@@ -24,7 +24,7 @@ export const WishlistProvider = ({ children }) => {
   const [wishlistItems, setWishlistItems] = useState([]);
   const { user, token } = useAuth();
 
-  const fetchWishlist = async () => {
+  const fetchWishlist = useCallback(async () => {
     if (!token || !user) {
       setWishlistItems([]);
       return;
@@ -41,7 +41,7 @@ export const WishlistProvider = ({ children }) => {
     } catch (error) {
       console.error('Failed to fetch wishlist:', error);
     }
-  };
+  }, [token, user]);
 
   useEffect(() => {
     if (user && token) {
@@ -49,9 +49,9 @@ export const WishlistProvider = ({ children }) => {
     } else {
       setWishlistItems([]);
     }
-  }, [user, token]);
+  }, [user, token, fetchWishlist]);
 
-  const toggleWishlist = async (product) => {
+  const toggleWishlist = useCallback(async (product) => {
     if (!user || !token) {
       return false;
     }
@@ -81,26 +81,28 @@ export const WishlistProvider = ({ children }) => {
       await fetchWishlist();
       return false;
     }
-  };
+  }, [user, token, wishlistItems, fetchWishlist]);
 
-  const removeFromWishlist = async (productId) => {
+  const removeFromWishlist = useCallback(async (productId) => {
     const product = wishlistItems.find((item) => item.id === productId);
     if (product) {
       await toggleWishlist(product);
     }
-  };
+  }, [wishlistItems, toggleWishlist]);
 
-  const isInWishlist = (productId) => {
+  const isInWishlist = useCallback((productId) => {
     return wishlistItems.some((item) => item.id === productId);
-  };
+  }, [wishlistItems]);
+
+  const contextValue = useMemo(() => ({
+    wishlistItems,
+    removeFromWishlist,
+    toggleWishlist,
+    isInWishlist
+  }), [wishlistItems, removeFromWishlist, toggleWishlist, isInWishlist]);
 
   return (
-    <WishlistContext.Provider value={{
-      wishlistItems,
-      removeFromWishlist,
-      toggleWishlist,
-      isInWishlist
-    }}>
+    <WishlistContext.Provider value={contextValue}>
       {children}
     </WishlistContext.Provider>
   );

@@ -10,10 +10,14 @@ if (dns.setDefaultResultOrder) {
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
+const compression = require('compression');
 const db = require('./config/db');
 const { runMigrations } = require('./migrate_pg');
 
 const app = express();
+
+// Enable gzip/deflate compression for all responses
+app.use(compression());
 
 const allowedOrigins = [
   process.env.FRONTEND_URL,
@@ -40,7 +44,8 @@ app.use(cors({
   },
   credentials: true
 }));
-app.use(express.json());
+app.use(express.json({ limit: '15mb' }));
+app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
 const productRoutes = require('./routes/productRoutes');
 const cartRoutes = require('./routes/cartRoutes');

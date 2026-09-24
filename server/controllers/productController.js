@@ -73,9 +73,9 @@ exports.getAllProducts = async (req, res) => {
       title: row.name,
       slug: row.slug,
       description: row.description,
-      price: `$${row.price}`,
+      price: `₹${row.price}`,
       rawPrice: parseFloat(row.price),
-      discountPrice: row.discount_price ? `$${row.discount_price}` : null,
+      discountPrice: row.discount_price ? `₹${row.discount_price}` : null,
       rawDiscountPrice: row.discount_price ? parseFloat(row.discount_price) : null,
       image: row.image_url,
       category: row.category_name,
@@ -100,6 +100,7 @@ exports.getAllProducts = async (req, res) => {
     if (!hasFilters) {
       cachedProductsList = products;
       lastCacheTime = Date.now();
+      res.set('Cache-Control', 'public, max-age=30, stale-while-revalidate=60');
     }
 
     res.json(products);
@@ -113,10 +114,17 @@ exports.getProductById = async (req, res) => {
   try {
     const { id } = req.params;
     const [rows] = await db.query(`
-      SELECT p.*, c.name as category_name, c.slug as category_slug, 
-             (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as image_url 
+      SELECT p.id, p.name, p.slug, p.description, p.price, p.discount_price, p.stock, 
+             p.rating, p.review_count, p.is_featured, p.is_on_sale, 
+             p.is_returnable, p.return_window_days, p.return_policy_type, 
+             p.is_open_box_delivery, p.badge, p.created_at,
+             c.name as category_name, c.slug as category_slug, 
+             pimg.image_url 
       FROM products p 
       LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN LATERAL (
+        SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY is_primary DESC, id ASC LIMIT 1
+      ) pimg ON true
       WHERE p.id = ? OR p.slug = ?
     `, [id, id]);
 
@@ -148,9 +156,9 @@ exports.getProductById = async (req, res) => {
       title: row.name,
       slug: row.slug,
       description: row.description,
-      price: `$${row.price}`,
+      price: `₹${row.price}`,
       rawPrice: parseFloat(row.price),
-      discountPrice: row.discount_price ? `$${row.discount_price}` : null,
+      discountPrice: row.discount_price ? `₹${row.discount_price}` : null,
       image: row.image_url,
       images: images,
       category: row.category_name,
@@ -171,6 +179,7 @@ exports.getProductById = async (req, res) => {
       badge: row.badge || null
     };
 
+    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=120');
     res.json(product);
   } catch (error) {
     console.error('Error fetching product:', error);
@@ -181,11 +190,19 @@ exports.getProductById = async (req, res) => {
 exports.getFeaturedProducts = async (req, res) => {
   try {
     const [rows] = await db.query(`
-      SELECT p.*, c.name as category_name, c.slug as category_slug, 
-             (SELECT pi.image_url FROM product_images pi WHERE pi.product_id = p.id ORDER BY pi.is_primary DESC, pi.id ASC LIMIT 1) as image_url 
+      SELECT p.id, p.name, p.slug, p.description, p.price, p.discount_price, p.stock, 
+             p.rating, p.review_count, p.is_featured, p.is_on_sale, 
+             p.is_returnable, p.return_window_days, p.return_policy_type, 
+             p.is_open_box_delivery, p.badge,
+             c.name as category_name, c.slug as category_slug, 
+             pimg.image_url 
       FROM products p 
       LEFT JOIN categories c ON p.category_id = c.id
+      LEFT JOIN LATERAL (
+        SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY is_primary DESC, id ASC LIMIT 1
+      ) pimg ON true
       WHERE p.is_featured = TRUE
+      ORDER BY p.rating DESC, p.created_at DESC
       LIMIT 4
     `);
     
@@ -194,9 +211,9 @@ exports.getFeaturedProducts = async (req, res) => {
       title: row.name,
       slug: row.slug,
       description: row.description,
-      price: `$${row.price}`,
+      price: `₹${row.price}`,
       rawPrice: parseFloat(row.price),
-      discountPrice: row.discount_price ? `$${row.discount_price}` : null,
+      discountPrice: row.discount_price ? `₹${row.discount_price}` : null,
       image: row.image_url,
       category: row.category_name,
       categorySlug: row.category_slug,
@@ -212,6 +229,7 @@ exports.getFeaturedProducts = async (req, res) => {
       badge: row.badge || null
     }));
 
+    res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=180');
     res.json(products);
   } catch (error) {
     console.error('Error fetching featured products:', error);
@@ -226,6 +244,38 @@ exports.createProduct = async (req, res) => {
       is_featured, is_on_sale, image_url,
       is_returnable, return_window_days, return_policy_type, is_open_box_delivery, badge
     } = req.body;
+
+    if (!name || !name.trim()) {
+      return res.status(400).json({ message: 'Product name is required' });
+    }
+    if (!slug || !slug.trim()) {
+      return res.status(400).json({ message: 'Product slug is required' });
+    }
+
+    // Constraint: Image is required when adding product
+    if (!image_url || typeof image_url !== 'string' || !image_url.trim()) {
+      return res.status(400).json({ message: 'Product image URL is required when creating a product' });
+    }
+
+    // Constraint: Item price cannot be negative
+    const numPrice = parseFloat(price);
+    if (isNaN(numPrice) || numPrice < 0) {
+      return res.status(400).json({ message: 'Item price cannot be negative' });
+    }
+
+    // Constraint: Discount cannot be greater than item price, nor negative
+    let numDiscount = null;
+    if (discount_price !== undefined && discount_price !== null && discount_price !== '') {
+      numDiscount = parseFloat(discount_price);
+      if (isNaN(numDiscount) || numDiscount < 0) {
+        return res.status(400).json({ message: 'Discount price cannot be negative' });
+      }
+      if (numDiscount > numPrice) {
+        return res.status(400).json({ 
+          message: `Discount price (₹${numDiscount}) cannot be greater than item price (₹${numPrice})` 
+        });
+      }
+    }
     
     const isReturnableVal = is_returnable !== undefined ? Boolean(is_returnable) : true;
     const returnWindowVal = return_window_days !== undefined && return_window_days !== '' ? parseInt(return_window_days, 10) : 7;
@@ -238,24 +288,26 @@ exports.createProduct = async (req, res) => {
         (name, slug, description, price, discount_price, category_id, stock, is_featured, is_on_sale, is_returnable, return_window_days, return_policy_type, is_open_box_delivery, badge) 
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
-        name, slug, description, price, discount_price, category_id, stock, 
+        name.trim(), slug.trim(), description || '', numPrice, numDiscount, category_id || null, stock || 0, 
         is_featured || false, is_on_sale || false, 
         isReturnableVal, returnWindowVal, policyTypeVal, openBoxVal, badgeVal
       ]
     );
 
-    if (image_url) {
+    const newProductId = result?.insertId || result?.[0]?.id || result?.id;
+
+    if (image_url && image_url.trim()) {
       await db.query(
         'INSERT INTO product_images (product_id, image_url, is_primary) VALUES (?, ?, TRUE)',
-        [result.insertId, image_url]
+        [newProductId, image_url.trim()]
       );
     }
 
     invalidateProductCache();
-    res.status(201).json({ id: result.insertId, message: 'Product created successfully' });
+    res.status(201).json({ id: newProductId, message: 'Product created successfully' });
   } catch (error) {
     console.error('Error creating product:', error);
-    res.status(500).json({ message: 'Server error creating product' });
+    res.status(500).json({ message: error.message || 'Server error creating product' });
   }
 };
 
@@ -264,9 +316,29 @@ exports.updateProduct = async (req, res) => {
     const { id } = req.params;
     const { 
       name, slug, description, price, discount_price, category_id, stock, 
-      is_featured, is_on_sale,
+      is_featured, is_on_sale, image_url,
       is_returnable, return_window_days, return_policy_type, is_open_box_delivery, badge
     } = req.body;
+
+    // Constraint: Item price cannot be negative
+    const numPrice = parseFloat(price);
+    if (isNaN(numPrice) || numPrice < 0) {
+      return res.status(400).json({ message: 'Item price cannot be negative' });
+    }
+
+    // Constraint: Discount cannot be greater than item price, nor negative
+    let numDiscount = null;
+    if (discount_price !== undefined && discount_price !== null && discount_price !== '') {
+      numDiscount = parseFloat(discount_price);
+      if (isNaN(numDiscount) || numDiscount < 0) {
+        return res.status(400).json({ message: 'Discount price cannot be negative' });
+      }
+      if (numDiscount > numPrice) {
+        return res.status(400).json({ 
+          message: `Discount price (₹${numDiscount}) cannot be greater than item price (₹${numPrice})` 
+        });
+      }
+    }
 
     const isReturnableVal = is_returnable !== undefined ? Boolean(is_returnable) : true;
     const returnWindowVal = return_window_days !== undefined && return_window_days !== '' ? parseInt(return_window_days, 10) : 7;
@@ -281,18 +353,30 @@ exports.updateProduct = async (req, res) => {
            is_returnable = ?, return_window_days = ?, return_policy_type = ?, is_open_box_delivery = ?, badge = ?
        WHERE id = ?`,
       [
-        name, slug, description, price, discount_price, 
-        category_id, stock, is_featured || false, is_on_sale || false,
+        name, slug, description, numPrice, numDiscount, 
+        category_id || null, stock || 0, is_featured || false, is_on_sale || false,
         isReturnableVal, returnWindowVal, policyTypeVal, openBoxVal, badgeVal,
         id
       ]
     );
 
+    if (image_url && image_url.trim()) {
+      const [existingImgs] = await db.query(
+        'SELECT id FROM product_images WHERE product_id = ? AND is_primary = TRUE LIMIT 1',
+        [id]
+      );
+      if (existingImgs.length > 0) {
+        await db.query('UPDATE product_images SET image_url = ? WHERE id = ?', [image_url.trim(), existingImgs[0].id]);
+      } else {
+        await db.query('INSERT INTO product_images (product_id, image_url, is_primary) VALUES (?, ?, TRUE)', [id, image_url.trim()]);
+      }
+    }
+
     invalidateProductCache();
     res.json({ message: 'Product updated successfully' });
   } catch (error) {
     console.error('Error updating product:', error);
-    res.status(500).json({ message: 'Server error updating product' });
+    res.status(500).json({ message: error.message || 'Server error updating product' });
   }
 };
 
@@ -304,16 +388,38 @@ exports.quickUpdateProduct = async (req, res) => {
     const params = [];
 
     if (stock !== undefined) {
+      const numStock = parseInt(stock, 10);
+      if (isNaN(numStock) || numStock < 0) {
+        return res.status(400).json({ message: 'Stock cannot be negative' });
+      }
       updates.push('stock = ?');
-      params.push(parseInt(stock, 10));
+      params.push(numStock);
     }
     if (is_on_sale !== undefined) {
       updates.push('is_on_sale = ?');
       params.push(Boolean(is_on_sale));
     }
     if (discount_price !== undefined) {
-      updates.push('discount_price = ?');
-      params.push(discount_price === '' || discount_price === null ? null : parseFloat(discount_price));
+      if (discount_price === '' || discount_price === null) {
+        updates.push('discount_price = ?');
+        params.push(null);
+      } else {
+        const numDiscount = parseFloat(discount_price);
+        if (isNaN(numDiscount) || numDiscount < 0) {
+          return res.status(400).json({ message: 'Discount price cannot be negative' });
+        }
+        const [pRows] = await db.query('SELECT price FROM products WHERE id = ?', [id]);
+        if (pRows.length > 0) {
+          const itemPrice = parseFloat(pRows[0].price);
+          if (numDiscount > itemPrice) {
+            return res.status(400).json({ 
+              message: `Discount price (₹${numDiscount}) cannot be greater than item price (₹${itemPrice})` 
+            });
+          }
+        }
+        updates.push('discount_price = ?');
+        params.push(numDiscount);
+      }
     }
     if (is_returnable !== undefined) {
       updates.push('is_returnable = ?');

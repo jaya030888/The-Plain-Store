@@ -1,4 +1,4 @@
-import React, { createContext, useState, useContext, useEffect, useRef } from 'react';
+import React, { createContext, useState, useContext, useEffect, useCallback, useMemo } from 'react';
 import { useAuth } from './AuthContext';
 import { API_URL } from '../utils/api';
 
@@ -26,12 +26,12 @@ export const CartProvider = ({ children }) => {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const { user, token } = useAuth();
 
-  const authHeaders = () => ({
+  const authHeaders = useCallback(() => ({
     'Content-Type': 'application/json',
     Authorization: `Bearer ${token}`
-  });
+  }), [token]);
 
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     if (!token || !user) {
       setCartItems([]);
       return;
@@ -48,7 +48,7 @@ export const CartProvider = ({ children }) => {
     } catch (error) {
       console.error('Failed to fetch cart:', error);
     }
-  };
+  }, [token, user]);
 
   useEffect(() => {
     if (user && token) {
@@ -56,9 +56,9 @@ export const CartProvider = ({ children }) => {
     } else {
       setCartItems([]);
     }
-  }, [user, token]);
+  }, [user, token, fetchCart]);
 
-  const addToCart = async (product, qty = 1) => {
+  const addToCart = useCallback(async (product, qty = 1) => {
     if (!user || !token) {
       return false;
     }
@@ -86,9 +86,9 @@ export const CartProvider = ({ children }) => {
       console.error('Error adding to cart:', error);
       return false;
     }
-  };
+  }, [user, token, authHeaders, fetchCart]);
 
-  const removeFromCart = async (productId) => {
+  const removeFromCart = useCallback(async (productId) => {
     if (!token) {
       const current = readLocalCart();
       const next = current.filter((item) => item.id !== productId);
@@ -108,9 +108,9 @@ export const CartProvider = ({ children }) => {
     } catch (error) {
       console.error('Error removing from cart:', error);
     }
-  };
+  }, [token, fetchCart]);
 
-  const updateQuantity = async (productId, quantity) => {
+  const updateQuantity = useCallback(async (productId, quantity) => {
     if (!token) {
       const current = readLocalCart();
       const next = quantity <= 0
@@ -136,9 +136,9 @@ export const CartProvider = ({ children }) => {
     } catch (error) {
       console.error('Error updating cart quantity:', error);
     }
-  };
+  }, [token, authHeaders, fetchCart]);
 
-  const clearCart = async () => {
+  const clearCart = useCallback(async () => {
     if (!token) {
       writeLocalCart([]);
       setCartItems([]);
@@ -156,29 +156,35 @@ export const CartProvider = ({ children }) => {
     } catch (error) {
       console.error('Error clearing cart:', error);
     }
-  };
+  }, [token]);
 
-  const cartTotal = cartItems.reduce((total, item) => {
-    const price = typeof item.price === 'string' ? parseFloat(item.price.replace('$', '')) : item.rawPrice;
-    return total + (price * item.quantity);
-  }, 0);
+  const cartTotal = useMemo(() => {
+    return cartItems.reduce((total, item) => {
+      const price = typeof item.price === 'string' ? parseFloat(item.price.replace(/[^0-9.]/g, '')) : (item.rawPrice || 0);
+      return total + (price * item.quantity);
+    }, 0);
+  }, [cartItems]);
 
-  const cartCount = cartItems.reduce((count, item) => count + item.quantity, 0);
+  const cartCount = useMemo(() => {
+    return cartItems.reduce((count, item) => count + item.quantity, 0);
+  }, [cartItems]);
+
+  const contextValue = useMemo(() => ({
+    cartItems,
+    addToCart,
+    removeFromCart,
+    updateQuantity,
+    clearCart,
+    cartTotal,
+    cartCount,
+    isCartOpen,
+    setIsCartOpen,
+    isCheckoutOpen,
+    setIsCheckoutOpen
+  }), [cartItems, addToCart, removeFromCart, updateQuantity, clearCart, cartTotal, cartCount, isCartOpen, isCheckoutOpen]);
 
   return (
-    <CartContext.Provider value={{
-      cartItems,
-      addToCart,
-      removeFromCart,
-      updateQuantity,
-      clearCart,
-      cartTotal,
-      cartCount,
-      isCartOpen,
-      setIsCartOpen,
-      isCheckoutOpen,
-      setIsCheckoutOpen
-    }}>
+    <CartContext.Provider value={contextValue}>
       {children}
     </CartContext.Provider>
   );

@@ -60,6 +60,12 @@ npm run dev   # VITE_API_URL defaults to http://localhost:5000
 cd ../admin
 npm install
 npm run dev   # VITE_API_URL defaults to http://localhost:5000
+
+# Nginx Gateway & Route Protector (Port 8088)
+# Start Nginx server (Windows native or Docker):
+powershell -ExecutionPolicy Bypass -File .\start-nginx.ps1
+# Or via Docker Compose:
+docker compose -f docker-compose.nginx.yml up -d
 ```
 
 ## Production Workflow

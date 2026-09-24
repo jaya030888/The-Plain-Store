@@ -24,7 +24,7 @@ exports.validateCoupon = async (req, res) => {
     const cartSubtotal = Number(subtotal) || 0;
     if (coupon.min_order_amount && cartSubtotal < Number(coupon.min_order_amount)) {
       return res.status(400).json({ 
-        message: `Minimum order amount of $${coupon.min_order_amount} required to use this coupon` 
+        message: `Minimum order amount of ₹${coupon.min_order_amount} required to use this coupon` 
       });
     }
 

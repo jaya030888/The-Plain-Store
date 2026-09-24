@@ -127,6 +127,9 @@ const HeroProductSlider = ({ products }) => {
     };
   }, [resetAutoplay, totalSlides]);
 
+  const touchStartXRef = useRef(0);
+  const touchEndXRef = useRef(0);
+
   const handleNext = () => {
     nextSlide();
     resetAutoplay();
@@ -137,8 +140,37 @@ const HeroProductSlider = ({ products }) => {
     resetAutoplay();
   };
 
+  const handleTouchStart = (e) => {
+    if (e.touches && e.touches.length > 0) {
+      touchStartXRef.current = e.touches[0].clientX;
+      touchEndXRef.current = e.touches[0].clientX;
+    }
+  };
+
+  const handleTouchMove = (e) => {
+    if (e.touches && e.touches.length > 0) {
+      touchEndXRef.current = e.touches[0].clientX;
+    }
+  };
+
+  const handleTouchEnd = () => {
+    const diff = touchStartXRef.current - touchEndXRef.current;
+    const threshold = 45;
+    if (diff > threshold) {
+      handleNext();
+    } else if (diff < -threshold) {
+      handlePrev();
+    }
+  };
+
   return (
-    <section className="h-slider-section" ref={containerRef}>
+    <section 
+      className="h-slider-section" 
+      ref={containerRef}
+      onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMove}
+      onTouchEnd={handleTouchEnd}
+    >
       {/* Slider Track */}
       <div className="h-slider-track">
         {products.map((product, i) => (

@@ -14,7 +14,7 @@ exports.getWishlist = async (req, res) => {
     const formattedWishlist = rows.map(item => ({
       id: item.id, // product id
       title: item.title,
-      price: item.discount_price ? `$${item.discount_price}` : `$${item.price}`,
+      price: item.discount_price ? `₹${item.discount_price}` : `₹${item.price}`,
       rawPrice: parseFloat(item.discount_price || item.price),
       image: item.image,
       stock: item.stock

@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import { useParams, Link } from 'react-router-dom';
 import { ArrowLeft, Truck, Package, CheckCircle2, MapPin, Copy, Check, RotateCcw, AlertCircle, X } from 'lucide-react';
 import { API_URL } from '../utils/api';
+import { replaceWithFallbackImage } from '../utils/productImage';
 
 const RETURN_REASONS = [
   'Damaged or defective item',
@@ -108,6 +109,17 @@ const OrderDetails = () => {
 
   const handleSubmitReturn = async (e) => {
     e.preventDefault();
+
+    if (!returnReason || !returnReason.trim()) {
+      setReturnErrorMessage('Please select a reason for the return.');
+      return;
+    }
+
+    if (!returnDetails || !returnDetails.trim()) {
+      setReturnErrorMessage('Please provide details regarding the condition of the product.');
+      return;
+    }
+
     setSubmittingReturn(true);
     setReturnErrorMessage('');
     setReturnSuccessMessage('');
@@ -263,8 +275,8 @@ const OrderDetails = () => {
           </div>
 
           {!isCancelled ? (
-            <div style={{ padding: '10px 5px 5px' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
+            <div className="tracking-stepper-scroll" style={{ padding: '10px 5px 5px' }}>
+              <div className="tracking-stepper-inner" style={{ display: 'flex', justifyContent: 'space-between', position: 'relative' }}>
                 {/* Connector Bar Background */}
                 <div style={{
                   position: 'absolute',
@@ -357,21 +369,21 @@ const OrderDetails = () => {
             <h3 style={{ margin: '0 0 10px 0' }}>Payment Summary</h3>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px' }}>
               <span>Subtotal:</span>
-              <span>${parseFloat(order.subtotal).toFixed(2)}</span>
+              <span>₹{parseFloat(order.subtotal).toFixed(2)}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px' }}>
               <span>Delivery Fee:</span>
-              <span>${parseFloat(order.delivery_fee).toFixed(2)}</span>
+              <span>₹{parseFloat(order.delivery_fee).toFixed(2)}</span>
             </div>
             {parseFloat(order.discount_amount) > 0 && (
               <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '5px', color: '#468165' }}>
                 <span>Discount:</span>
-                <span>-${parseFloat(order.discount_amount).toFixed(2)}</span>
+                <span>-₹{parseFloat(order.discount_amount).toFixed(2)}</span>
               </div>
             )}
             <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '10px', paddingTop: '10px', borderTop: '1px solid #eee', fontWeight: 'bold' }}>
               <span>Total:</span>
-              <span>${parseFloat(order.total).toFixed(2)}</span>
+              <span>₹{parseFloat(order.total).toFixed(2)}</span>
             </div>
             <p style={{ marginTop: '10px', fontSize: '13px', color: '#666' }}>Payment Status: <span style={{ textTransform: 'capitalize', fontWeight: 'bold' }}>{order.payment_status}</span></p>
           </div>
@@ -381,13 +393,18 @@ const OrderDetails = () => {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '15px', marginTop: '15px' }}>
           {order.items?.map(item => (
             <div key={item.id} style={{ display: 'flex', gap: '15px', border: '1px solid #ddd', padding: '15px', borderRadius: '8px', alignItems: 'center', background: '#fff' }}>
-              <img src={item.image} alt={item.title} style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '8px' }} />
+              <img 
+                src={item.image} 
+                alt={item.title} 
+                onError={(e) => replaceWithFallbackImage(e, item.id || item.product_id)}
+                style={{ width: '70px', height: '70px', objectFit: 'cover', borderRadius: '8px' }} 
+              />
               <div style={{ flex: 1 }}>
                 <h4 style={{ margin: '0 0 5px 0' }}>{item.title}</h4>
                 <p style={{ margin: 0, color: '#666', fontSize: '13px' }}>Qty: {item.quantity}</p>
               </div>
               <div style={{ fontWeight: 'bold' }}>
-                ${(parseFloat(item.price_at_purchase) * item.quantity).toFixed(2)}
+                ₹{(parseFloat(item.price_at_purchase) * item.quantity).toFixed(2)}
               </div>
             </div>
           ))}
@@ -435,7 +452,7 @@ const OrderDetails = () => {
               </div>
 
               <p style={{ margin: '0 0 16px 0', fontSize: '0.9rem', color: '#555' }}>
-                Returning <strong>Order #{order.id}</strong> (Total: ${parseFloat(order.total).toFixed(2)})
+                Returning <strong>Order #{order.id}</strong> (Total: ₹{parseFloat(order.total).toFixed(2)})
               </p>
 
               {returnSuccessMessage ? (
@@ -470,14 +487,15 @@ const OrderDetails = () => {
 
                   <div>
                     <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
-                      Additional Details / Condition of Product (Optional)
+                      Additional Details / Condition of Product *
                     </label>
                     <textarea 
                       rows={3} 
                       value={returnDetails} 
                       onChange={e => setReturnDetails(e.target.value)}
-                      placeholder="Please describe any defects, package condition, or items to be returned..."
+                      placeholder="Please describe any defects, package condition, or reason for return (required)..."
                       style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.9rem', outline: 'none', resize: 'vertical' }}
+                      required
                     />
                   </div>
 

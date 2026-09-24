@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate, useLocation, Link } from 'react-router-dom';
-import { ArrowLeft, ShoppingBag, Heart, ShieldCheck, Truck, RefreshCw, CheckCircle2, AlertCircle, ExternalLink, Award, PackageCheck } from 'lucide-react';
+import { ArrowLeft, ShoppingBag, Heart, ShieldCheck, Truck, RefreshCw, CheckCircle2, AlertCircle, Award, PackageCheck } from 'lucide-react';
 import { useCart } from '../context/CartContext';
 import { useWishlist } from '../context/WishlistContext';
 import { useAuth } from '../context/AuthContext';
@@ -205,37 +205,6 @@ const ProductDetails = () => {
             >
               <Heart size={22} fill={isWished ? '#8F422E' : 'none'} color={isWished ? '#8F422E' : 'currentColor'} /> {isWished ? 'In Wishlist' : 'Add to Wishlist'}
             </button>
-          </div>
-
-          {/* Amazon Marketplace Option */}
-          <div className="pd-amazon-option" style={{ marginTop: '1.25rem', padding: '12px 16px', background: '#fbfaf7', borderRadius: '8px', border: '1px solid #e7e2d7' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '10px' }}>
-              <span style={{ fontSize: '0.86rem', color: '#444' }}>
-                Also available via Amazon India:
-              </span>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <a
-                  href={`https://www.amazon.in/s?k=${encodeURIComponent(product.title + ' The Plain Store')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  style={{
-                    display: 'inline-flex',
-                    alignItems: 'center',
-                    gap: '6px',
-                    fontSize: '0.85rem',
-                    color: '#2b5a44',
-                    background: '#ffffff',
-                    border: '1px solid #b8d4c5',
-                    padding: '6px 14px',
-                    borderRadius: '6px',
-                    textDecoration: 'none',
-                    fontWeight: 600
-                  }}
-                >
-                  View on Amazon India <ExternalLink size={13} />
-                </a>
-              </div>
-            </div>
           </div>
 
           {/* Reassurance & Value Props (Return Policy & Open Box Delivery) */}

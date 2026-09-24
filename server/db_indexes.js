@@ -7,6 +7,9 @@ async function createIndexes() {
     // Products table indexes
     { name: 'idx_products_category_id', sql: 'CREATE INDEX IF NOT EXISTS idx_products_category_id ON products(category_id);' },
     { name: 'idx_products_slug', sql: 'CREATE INDEX IF NOT EXISTS idx_products_slug ON products(slug);' },
+    { name: 'idx_categories_slug', sql: 'CREATE INDEX IF NOT EXISTS idx_categories_slug ON categories(slug);' },
+    { name: 'idx_products_category_sale', sql: 'CREATE INDEX IF NOT EXISTS idx_products_category_sale ON products(category_id, is_on_sale);' },
+    { name: 'idx_products_name_lower', sql: 'CREATE INDEX IF NOT EXISTS idx_products_name_lower ON products(LOWER(name));' },
     { name: 'idx_products_featured', sql: 'CREATE INDEX IF NOT EXISTS idx_products_featured ON products(is_featured) WHERE is_featured = TRUE;' },
     { name: 'idx_products_on_sale', sql: 'CREATE INDEX IF NOT EXISTS idx_products_on_sale ON products(is_on_sale) WHERE is_on_sale = TRUE;' },
     { name: 'idx_products_created_at', sql: 'CREATE INDEX IF NOT EXISTS idx_products_created_at ON products(created_at DESC);' },
@@ -31,7 +34,11 @@ async function createIndexes() {
     // Coupons indexes
     { name: 'idx_coupons_code_upper', sql: 'CREATE INDEX IF NOT EXISTS idx_coupons_code_upper ON coupons(UPPER(code));' },
     { name: 'idx_coupon_products_coupon_id', sql: 'CREATE INDEX IF NOT EXISTS idx_coupon_products_coupon_id ON coupon_products(coupon_id);' },
-    { name: 'idx_coupon_products_product_id', sql: 'CREATE INDEX IF NOT EXISTS idx_coupon_products_product_id ON coupon_products(product_id);' }
+    { name: 'idx_coupon_products_product_id', sql: 'CREATE INDEX IF NOT EXISTS idx_coupon_products_product_id ON coupon_products(product_id);' },
+
+    // Addresses indexes
+    { name: 'idx_addresses_user_id', sql: 'CREATE INDEX IF NOT EXISTS idx_addresses_user_id ON addresses(user_id);' },
+    { name: 'idx_addresses_default', sql: 'CREATE INDEX IF NOT EXISTS idx_addresses_default ON addresses(user_id, is_default DESC);' }
   ];
 
   for (const { name, sql } of indexQueries) {

@@ -54,6 +54,13 @@ const loginUser = async (req, res) => {
     }
 
     const user = users[0];
+    if (user.is_deleted) {
+      return res.status(401).json({ message: 'Account not found or has been removed' });
+    }
+    if (user.is_blocked) {
+      return res.status(403).json({ message: 'Your account has been suspended/blocked. Please contact support.' });
+    }
+
     const isMatch = await bcrypt.compare(password, user.password_hash);
 
     if (isMatch) {
@@ -105,9 +112,32 @@ const updateProfile = async (req, res) => {
   }
 };
 
+const verifyToken = async (req, res) => {
+  if (req.user) {
+    res.setHeader('X-User-Id', String(req.user.id));
+    res.setHeader('X-User-Role', String(req.user.role));
+    return res.status(200).send('OK');
+  }
+  return res.status(401).send('Unauthorized');
+};
+
+const verifyAdmin = async (req, res) => {
+  if (req.user && req.user.role === 'admin') {
+    res.setHeader('X-User-Id', String(req.user.id));
+    res.setHeader('X-User-Role', 'admin');
+    return res.status(200).send('OK');
+  }
+  if (req.user) {
+    return res.status(403).send('Forbidden: Admin role required');
+  }
+  return res.status(401).send('Unauthorized: No admin token');
+};
+
 module.exports = {
   registerUser,
   loginUser,
   getProfile,
-  updateProfile
+  updateProfile,
+  verifyToken,
+  verifyAdmin
 };

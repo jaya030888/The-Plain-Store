@@ -15,7 +15,7 @@ exports.getCart = async (req, res) => {
       id: item.product_id, // Map product_id to id so context matches
       cartItemId: item.id,
       title: item.title,
-      price: item.discount_price ? `$${item.discount_price}` : `$${item.price}`,
+      price: item.discount_price ? `₹${item.discount_price}` : `₹${item.price}`,
       rawPrice: parseFloat(item.discount_price || item.price),
       quantity: item.quantity,
       image: item.image,

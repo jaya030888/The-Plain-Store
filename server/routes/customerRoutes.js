@@ -3,17 +3,19 @@ const router = express.Router();
 const db = require('../config/db');
 const { protect, adminOnly } = require('../middleware/authMiddleware');
 
+// GET all active customers with order counts and spent totals
 router.get('/admin', protect, adminOnly, async (req, res) => {
   try {
     const [rows] = await db.query(`
       SELECT u.id, u.name, u.email, u.created_at,
+             COALESCE(u.is_blocked, FALSE) as is_blocked,
              COUNT(o.id) as number_of_orders,
-             SUM(o.total) as total_spent
+             COALESCE(SUM(o.total), 0) as total_spent
       FROM users u
       LEFT JOIN orders o ON u.id = o.user_id
-      WHERE u.role = 'customer'
-      GROUP BY u.id, u.name, u.email, u.created_at
-      ORDER BY u.created_at DESC
+      WHERE u.role = 'customer' AND (u.is_deleted IS FALSE OR u.is_deleted IS NULL)
+      GROUP BY u.id, u.name, u.email, u.created_at, u.is_blocked
+      ORDER BY u.id ASC
     `);
     res.json(rows);
   } catch (error) {
@@ -22,12 +24,12 @@ router.get('/admin', protect, adminOnly, async (req, res) => {
   }
 });
 
+// GET complete customer history (orders, returns, addresses, metrics)
 router.get('/admin/:id/history', protect, adminOnly, async (req, res) => {
-
   try {
     const { id } = req.params;
     const [userRows] = await db.query(
-      'SELECT id, name, email, role, created_at FROM users WHERE id = ?',
+      'SELECT id, name, email, role, created_at, COALESCE(is_blocked, FALSE) as is_blocked FROM users WHERE id = ?',
       [id]
     );
 
@@ -42,7 +44,7 @@ router.get('/admin/:id/history', protect, adminOnly, async (req, res) => {
       [id]
     );
 
-    // Fetch all orders by user_id OR matching customer email
+    // Fetch all orders by user_id
     const [orders] = await db.query(
       `SELECT o.*,
               COALESCE(a.phone, '') as shipping_phone,
@@ -54,17 +56,24 @@ router.get('/admin/:id/history', protect, adminOnly, async (req, res) => {
               COALESCE(a.pincode, '') as pincode
        FROM orders o
        LEFT JOIN addresses a ON o.address_id = a.id
-       WHERE o.user_id = ? OR (LOWER(COALESCE(o.customer_email, '')) = LOWER(?))
+       WHERE o.user_id = ?
        ORDER BY o.created_at DESC`,
-      [id, customer.email]
+      [id]
     );
 
     // Fetch items for each order
     for (const order of orders) {
       const [items] = await db.query(
-        `SELECT oi.*, p.title, p.image, p.price as current_price
+        `SELECT oi.*, 
+                oi.price_at_purchase as price,
+                p.name as title, 
+                pimg.image_url as image, 
+                p.price as current_price
          FROM order_items oi
          JOIN products p ON oi.product_id = p.id
+         LEFT JOIN LATERAL (
+           SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY is_primary DESC, id ASC LIMIT 1
+         ) pimg ON true
          WHERE oi.order_id = ?`,
         [order.id]
       );
@@ -98,5 +107,72 @@ router.get('/admin/:id/history', protect, adminOnly, async (req, res) => {
   }
 });
 
-module.exports = router;
+// PATCH toggle block / unblock customer
+router.patch('/admin/:id/toggle-block', protect, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [userRows] = await db.query(
+      'SELECT id, name, is_blocked FROM users WHERE id = ? AND (is_deleted IS FALSE OR is_deleted IS NULL)',
+      [id]
+    );
 
+    if (userRows.length === 0) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    const currentStatus = Boolean(userRows[0].is_blocked);
+    const newStatus = !currentStatus;
+
+    await db.query('UPDATE users SET is_blocked = ? WHERE id = ?', [newStatus, id]);
+
+    res.json({
+      success: true,
+      message: newStatus ? `Customer ${userRows[0].name} has been blocked.` : `Customer ${userRows[0].name} has been unblocked.`,
+      is_blocked: newStatus
+    });
+  } catch (error) {
+    console.error('Error toggling customer blocked status:', error);
+    res.status(500).json({ message: 'Server error toggling customer blocked status' });
+  }
+});
+
+// DELETE customer (soft-deletes if past orders exist, otherwise hard-deletes)
+router.delete('/admin/:id', protect, adminOnly, async (req, res) => {
+  try {
+    const { id } = req.params;
+    const [userRows] = await db.query(
+      'SELECT id, name FROM users WHERE id = ? AND (is_deleted IS FALSE OR is_deleted IS NULL)',
+      [id]
+    );
+
+    if (userRows.length === 0) {
+      return res.status(404).json({ message: 'Customer not found' });
+    }
+
+    const customerName = userRows[0].name;
+
+    // Check if customer has orders
+    const [orders] = await db.query('SELECT id FROM orders WHERE user_id = ? LIMIT 1', [id]);
+
+    if (orders.length > 0) {
+      // Soft-delete: mark is_deleted & is_blocked to keep historical order data intact
+      await db.query(
+        'UPDATE users SET is_deleted = TRUE, is_blocked = TRUE WHERE id = ?',
+        [id]
+      );
+    } else {
+      // Hard delete if no orders exist
+      await db.query('DELETE FROM users WHERE id = ?', [id]);
+    }
+
+    res.json({
+      success: true,
+      message: `Customer "${customerName}" was successfully removed.`
+    });
+  } catch (error) {
+    console.error('Error deleting customer:', error);
+    res.status(500).json({ message: 'Server error deleting customer' });
+  }
+});
+
+module.exports = router;

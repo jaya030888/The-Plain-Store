@@ -12,7 +12,7 @@ import {
   Check, 
   ChevronDown, 
   ChevronRight, 
-  DollarSign, 
+  IndianRupee, 
   Package, 
   Clock, 
   RefreshCw,
@@ -335,11 +335,11 @@ const OrdersManager = () => {
           <div>
             <div style={{ fontSize: '0.72rem', fontWeight: 600, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.5px' }}>Gross Revenue</div>
             <div style={{ fontSize: '1.45rem', fontWeight: 700, color: '#0f172a', marginTop: '4px' }}>
-              ${totalSales.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+              ₹{totalSales.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
             </div>
           </div>
           <div style={{ width: '40px', height: '40px', borderRadius: '8px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
-            <DollarSign size={20} />
+            <IndianRupee size={20} />
           </div>
         </div>
 
@@ -578,7 +578,7 @@ const OrdersManager = () => {
                           #{order.id}
                         </span>
                         <span style={{ fontSize: '0.74rem', color: '#64748b' }}>
-                          ${parseFloat(order.total).toFixed(2)}
+                          ₹{parseFloat(order.total).toFixed(2)}
                         </span>
                       </div>
                     </td>
@@ -885,7 +885,7 @@ const OrdersManager = () => {
                     <td>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
                         <span style={{ fontWeight: '700', color: '#0f172a', fontSize: '0.92rem' }}>
-                          ${parseFloat(order.total).toFixed(2)}
+                          ₹{parseFloat(order.total).toFixed(2)}
                         </span>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                           <span style={{
@@ -1284,10 +1284,10 @@ const OrdersManager = () => {
                             <span style={{ fontWeight: 600, color: '#0f172a', fontSize: '0.84rem' }}>{item.title}</span>
                           </div>
                         </td>
-                        <td style={{ color: '#475569', fontSize: '0.84rem' }}>${parseFloat(item.price_at_purchase).toFixed(2)}</td>
+                        <td style={{ color: '#475569', fontSize: '0.84rem' }}>₹{parseFloat(item.price_at_purchase).toFixed(2)}</td>
                         <td style={{ color: '#475569', fontSize: '0.84rem' }}>{item.quantity}</td>
                         <td style={{ textAlign: 'right', fontWeight: 600, color: '#0f172a', fontSize: '0.84rem' }}>
-                          ${(parseFloat(item.price_at_purchase) * item.quantity).toFixed(2)}
+                          ₹{(parseFloat(item.price_at_purchase) * item.quantity).toFixed(2)}
                         </td>
                       </tr>
                     ))}
@@ -1310,21 +1310,21 @@ const OrdersManager = () => {
             }}>
               <div style={{ width: '240px', display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
                 <span>Subtotal:</span>
-                <span style={{ color: '#0f172a', fontWeight: 500 }}>${parseFloat(selectedOrder.subtotal || selectedOrder.total).toFixed(2)}</span>
+                <span style={{ color: '#0f172a', fontWeight: 500 }}>₹{parseFloat(selectedOrder.subtotal || selectedOrder.total).toFixed(2)}</span>
               </div>
               <div style={{ width: '240px', display: 'flex', justifyContent: 'space-between', color: '#64748b' }}>
                 <span>Delivery:</span>
-                <span style={{ color: '#0f172a', fontWeight: 500 }}>${parseFloat(selectedOrder.delivery_fee || 0).toFixed(2)}</span>
+                <span style={{ color: '#0f172a', fontWeight: 500 }}>₹{parseFloat(selectedOrder.delivery_fee || 0).toFixed(2)}</span>
               </div>
               {parseFloat(selectedOrder.discount_amount || 0) > 0 && (
                 <div style={{ width: '240px', display: 'flex', justifyContent: 'space-between', color: '#059669', fontWeight: 600 }}>
                   <span>Discount:</span>
-                  <span>-${parseFloat(selectedOrder.discount_amount).toFixed(2)}</span>
+                  <span>-₹{parseFloat(selectedOrder.discount_amount).toFixed(2)}</span>
                 </div>
               )}
               <div style={{ width: '240px', display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '1rem', color: '#0f172a', borderTop: '1px solid #e2e8f0', paddingTop: '8px', marginTop: '4px' }}>
                 <span>Total:</span>
-                <span>${parseFloat(selectedOrder.total).toFixed(2)}</span>
+                <span>₹{parseFloat(selectedOrder.total).toFixed(2)}</span>
               </div>
             </div>
 

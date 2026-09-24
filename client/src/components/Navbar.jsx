@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext';
 import { useWishlist } from '../context/WishlistContext';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { API_URL } from '../utils/api';
+import { cachedFetch } from '../utils/apiCache';
 import { replaceWithFallbackImage } from '../utils/productImage';
 import SaleBanner from './SaleBanner';
 
@@ -59,11 +60,8 @@ const Navbar = () => {
     const timer = setTimeout(async () => {
       setIsSearching(true);
       try {
-        const res = await fetch(`${API_URL}/api/products?search=${encodeURIComponent(searchTerm.trim())}`);
-        if (res.ok) {
-          const data = await res.json();
-          setSearchResults(Array.isArray(data) ? data.slice(0, 6) : []);
-        }
+        const data = await cachedFetch(`${API_URL}/api/products?search=${encodeURIComponent(searchTerm.trim())}`, {}, 30000);
+        setSearchResults(Array.isArray(data) ? data.slice(0, 6) : []);
       } catch (err) {
         console.error('Live search error:', err);
       } finally {
@@ -89,12 +87,9 @@ const Navbar = () => {
   useEffect(() => {
     const fetchNavCategories = async () => {
       try {
-        const res = await fetch(`${API_URL}/api/categories`);
-        if (res.ok) {
-          const data = await res.json();
-          if (Array.isArray(data) && data.length > 0) {
-            setCategories(data);
-          }
+        const data = await cachedFetch(`${API_URL}/api/categories`, {}, 120000);
+        if (Array.isArray(data) && data.length > 0) {
+          setCategories(data);
         }
       } catch {
         // Fallback already present in DEFAULT_CATEGORIES
@@ -139,11 +134,17 @@ const Navbar = () => {
   const handleCategorySelect = (slug) => {
     setIsCategoryDropdownOpen(false);
     setIsMobileMenuOpen(false);
-    if (slug === 'all') {
-      navigate('/');
-    } else {
-      navigate(`/?category=${encodeURIComponent(slug)}`);
+    const searchParams = new URLSearchParams(location.search);
+    const isSale = searchParams.get('onSale') === 'true';
+    const params = new URLSearchParams();
+    if (slug !== 'all') {
+      params.set('category', slug);
     }
+    if (isSale) {
+      params.set('onSale', 'true');
+    }
+    const query = params.toString();
+    navigate(query ? `/?${query}` : '/');
   };
 
   return (

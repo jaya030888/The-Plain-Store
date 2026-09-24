@@ -2,7 +2,8 @@ const db = require('../config/db');
 
 exports.getAllCategories = async (req, res) => {
   try {
-    const [rows] = await db.query('SELECT * FROM categories ORDER BY name ASC');
+    const [rows] = await db.query('SELECT id, name, slug FROM categories ORDER BY name ASC');
+    res.set('Cache-Control', 'public, max-age=120, stale-while-revalidate=300');
     res.json(rows);
   } catch (error) {
     console.error('Error fetching categories:', error);

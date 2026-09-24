@@ -42,13 +42,14 @@ pool.on('error', (err) => {
 });
 
 const convertPlaceholders = (sql, params) => {
-  let pgSql = sql;
+  let pgSql = sql ? sql.trim() : '';
   if (params && params.length > 0) {
     let index = 1;
-    pgSql = sql.replace(/\?/g, () => `$${index++}`);
+    pgSql = pgSql.replace(/\?/g, () => `$${index++}`);
   }
-  const isInsert = pgSql.trim().toUpperCase().startsWith('INSERT');
+  const isInsert = pgSql.toUpperCase().startsWith('INSERT');
   if (isInsert && !pgSql.toUpperCase().includes('RETURNING')) {
+    pgSql = pgSql.replace(/;+\s*$/, '');
     pgSql += ' RETURNING id';
   }
   return { pgSql, isInsert };

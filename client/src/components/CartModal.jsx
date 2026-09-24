@@ -1,8 +1,8 @@
 import React from 'react';
 import { useCart } from '../context/CartContext';
 import { X, Trash2 } from 'lucide-react';
-
 import { useNavigate } from 'react-router-dom';
+import { replaceWithFallbackImage } from '../utils/productImage';
 
 const CartModal = () => {
   const { cartItems, isCartOpen, setIsCartOpen, removeFromCart, updateQuantity, clearCart, cartTotal, setIsCheckoutOpen } = useCart();
@@ -34,7 +34,12 @@ const CartModal = () => {
           ) : (
             cartItems.map(item => (
               <div key={item.id} className="cart-item" onClick={() => handleItemClick(item.id)} style={{ cursor: 'pointer' }}>
-                <img src={item.image} alt={item.title} className="cart-item-img" />
+                <img 
+                  src={item.image} 
+                  alt={item.title} 
+                  className="cart-item-img" 
+                  onError={(e) => replaceWithFallbackImage(e, item.id)}
+                />
                 <div className="cart-item-details" style={{ flex: 1, padding: '0 15px' }}>
                   <h4 style={{ margin: '0 0 5px 0' }}>{item.title}</h4>
                   <p style={{ margin: '0 0 10px 0', color: '#666' }}>{item.price}</p>
@@ -73,7 +78,7 @@ const CartModal = () => {
               </button>
               <div className="cart-total" style={{ fontWeight: 'bold' }}>
                 <span>Total: </span>
-                <span>${cartTotal.toFixed(2)}</span>
+                <span>₹{cartTotal.toFixed(2)}</span>
               </div>
             </div>
             <button className="btn-primary checkout-btn" onClick={handleCheckout}>Proceed to Checkout</button>

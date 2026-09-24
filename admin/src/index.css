@@ -91,7 +91,7 @@ table {
 }
 
 .admin-table th {
-  padding: 12px 18px;
+  padding: 10px 12px;
   background-color: #f8fafc;
   border-bottom: 1px solid #e2e8f0;
   font-weight: 600;
@@ -103,9 +103,9 @@ table {
 }
 
 .admin-table td {
-  padding: 14px 18px;
+  padding: 10px 12px;
   border-bottom: 1px solid #f1f5f9;
-  font-size: 0.86rem;
+  font-size: 0.84rem;
   vertical-align: middle;
 }
 
@@ -154,7 +154,7 @@ table {
   }
 
   .admin-mobile-header {
-    display: flex;
+    display: flex !important;
     justify-content: space-between;
     align-items: center;
     padding: 15px 20px;

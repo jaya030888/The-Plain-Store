@@ -44,7 +44,7 @@ const AdminLayout = ({ children, title }) => {
   return (
     <div className="admin-layout-wrapper" style={{ display: 'flex', height: '100vh', backgroundColor: '#f8fafc', fontFamily: 'Inter, sans-serif' }}>
       {/* Mobile Top Header */}
-      <div className="admin-mobile-header" style={{ display: 'none', justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', background: '#fff', borderBottom: '1px solid #e2e8f0' }}>
+      <div className="admin-mobile-header" style={{ justifyContent: 'space-between', alignItems: 'center', padding: '14px 20px', background: '#fff', borderBottom: '1px solid #e2e8f0' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
           <h2 style={{ fontFamily: 'Dancing Script, cursive', fontSize: '1.5rem', color: '#468165', margin: 0, fontWeight: 700 }}>The Plain Store</h2>
           <span style={{ fontSize: '0.65rem', background: '#f1f5f9', color: '#475569', padding: '2px 6px', borderRadius: '4px', fontWeight: 600 }}>ADMIN</span>

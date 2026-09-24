@@ -1,15 +1,29 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { API_URL } from '../utils/api';
 
 const Profile = () => {
   const { user, token, updateUser } = useAuth();
-  const [addresses, setAddresses] = useState([]);
+  const [addresses, setAddresses] = useState(() => {
+    try {
+      const cached = localStorage.getItem(`tps_addresses_${user?.id || 'current'}`);
+      return cached ? JSON.parse(cached) : [];
+    } catch {
+      return [];
+    }
+  });
   const [showAddForm, setShowAddForm] = useState(false);
   const [formData, setFormData] = useState({
     full_name: '', phone: '', house_flat: '', street: '', area: '', city: '', state: '', pincode: '', is_default: false
   });
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(() => {
+    try {
+      const cached = localStorage.getItem(`tps_addresses_${user?.id || 'current'}`);
+      return cached ? false : true;
+    } catch {
+      return true;
+    }
+  });
 
   const [isEditingProfile, setIsEditingProfile] = useState(false);
   const [profileData, setProfileData] = useState({ name: user?.name || '', email: user?.email || '' });
@@ -44,25 +58,32 @@ const Profile = () => {
     }
   };
 
-  useEffect(() => {
-    fetchAddresses();
-  }, []);
-
-  const fetchAddresses = async () => {
+  const fetchAddresses = useCallback(async () => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}/api/addresses`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
-        setAddresses(data);
+        setAddresses(Array.isArray(data) ? data : []);
+        try {
+          localStorage.setItem(`tps_addresses_${user?.id || 'current'}`, JSON.stringify(data));
+        } catch {}
       }
     } catch (error) {
       console.error('Error fetching addresses', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [token, user?.id]);
+
+  useEffect(() => {
+    fetchAddresses();
+  }, [fetchAddresses]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;

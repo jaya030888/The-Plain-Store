@@ -1,8 +1,9 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { Link } from 'react-router-dom';
 import { Truck, RotateCcw, AlertCircle, CheckCircle2, X } from 'lucide-react';
 import { API_URL } from '../utils/api';
+import { replaceWithFallbackImage } from '../utils/productImage';
 
 const RETURN_REASONS = [
   'Damaged or defective item',
@@ -26,25 +27,29 @@ const Orders = () => {
   const [returnSuccessMessage, setReturnSuccessMessage] = useState('');
   const [returnErrorMessage, setReturnErrorMessage] = useState('');
 
-  const fetchOrders = async () => {
+  const fetchOrders = useCallback(async () => {
+    if (!token) {
+      setLoading(false);
+      return;
+    }
     try {
       const res = await fetch(`${API_URL}/api/orders/my-orders`, {
         headers: { Authorization: `Bearer ${token}` }
       });
       if (res.ok) {
         const data = await res.json();
-        setOrders(data);
+        setOrders(Array.isArray(data) ? data : []);
       }
     } catch (error) {
       console.error('Error fetching orders:', error);
     } finally {
       setLoading(false);
     }
-  };
+  }, [token]);
 
   useEffect(() => {
     fetchOrders();
-  }, [token]);
+  }, [fetchOrders]);
 
   const getStatusColor = (status) => {
     switch(status) {
@@ -85,6 +90,16 @@ const Orders = () => {
   const handleSubmitReturn = async (e) => {
     e.preventDefault();
     if (!returnModalOrder) return;
+
+    if (!returnReason || !returnReason.trim()) {
+      setReturnErrorMessage('Please select a reason for the return.');
+      return;
+    }
+
+    if (!returnDetails || !returnDetails.trim()) {
+      setReturnErrorMessage('Please provide details regarding the condition of the product.');
+      return;
+    }
 
     setSubmittingReturn(true);
     setReturnErrorMessage('');
@@ -189,6 +204,7 @@ const Orders = () => {
                       <img 
                         src={item.image} 
                         alt={item.title} 
+                        onError={(e) => replaceWithFallbackImage(e, item.id || item.product_id)}
                         style={{ width: '60px', height: '60px', objectFit: 'cover', borderRadius: '6px' }} 
                       />
                       <div style={{ fontSize: '12px', overflow: 'hidden' }}>
@@ -200,7 +216,7 @@ const Orders = () => {
                 </div>
                 
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '10px', borderTop: '1px solid #eee', flexWrap: 'wrap', gap: '10px' }}>
-                  <p style={{ margin: 0, fontWeight: 'bold' }}>Total: ${parseFloat(order.total).toFixed(2)}</p>
+                  <p style={{ margin: 0, fontWeight: 'bold' }}>Total: ₹{parseFloat(order.total).toFixed(2)}</p>
                   
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', alignItems: 'center' }}>
                     {/* Return Action Button - Hide if already returned, refunded, or return requested */}
@@ -279,7 +295,7 @@ const Orders = () => {
               </div>
 
               <p style={{ margin: '0 0 16px 0', fontSize: '0.9rem', color: '#555' }}>
-                Returning <strong>Order #{returnModalOrder.id}</strong> (Total: ${parseFloat(returnModalOrder.total).toFixed(2)})
+                Returning <strong>Order #{returnModalOrder.id}</strong> (Total: ₹{parseFloat(returnModalOrder.total).toFixed(2)})
               </p>
 
               {returnSuccessMessage ? (
@@ -314,14 +330,15 @@ const Orders = () => {
 
                   <div>
                     <label style={{ display: 'block', fontSize: '0.88rem', fontWeight: 600, color: '#374151', marginBottom: '6px' }}>
-                      Additional Details / Condition of Product (Optional)
+                      Additional Details / Condition of Product *
                     </label>
                     <textarea 
                       rows={3} 
                       value={returnDetails} 
                       onChange={e => setReturnDetails(e.target.value)}
-                      placeholder="Please describe any defects, package condition, or items to be returned..."
+                      placeholder="Please describe any defects, package condition, or reason for return (required)..."
                       style={{ width: '100%', padding: '10px', borderRadius: '6px', border: '1px solid #d1d5db', fontSize: '0.9rem', outline: 'none', resize: 'vertical' }}
+                      required
                     />
                   </div>
 
