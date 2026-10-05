@@ -112,9 +112,12 @@ exports.getAllCoupons = async (req, res) => {
     
     // Fetch coupon products for all coupons
     const [assoc] = await db.query(`
-      SELECT cp.coupon_id, cp.product_id, p.name as product_name, p.price, p.image_url
+      SELECT cp.coupon_id, cp.product_id, p.name as product_name, p.price, pi.image_url
       FROM coupon_products cp
       JOIN products p ON cp.product_id = p.id
+      LEFT JOIN LATERAL (
+        SELECT image_url FROM product_images WHERE product_id = p.id ORDER BY is_primary DESC, id ASC LIMIT 1
+      ) pi ON true
     `);
 
     const couponProductsMap = {};

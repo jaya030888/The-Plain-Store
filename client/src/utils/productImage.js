@@ -1,7 +1,8 @@
 const fallbackImages = [
   'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80',
-  'https://images.unsplash.com/photo-1594042898950-c8e4a7c06eb1?w=800&q=80',
-  'https://images.unsplash.com/photo-1613564998797-15d97f80f1d0?w=800&q=80',
+  'https://images.unsplash.com/photo-1544816155-12df9643f363?w=800&q=80',
+  'https://images.unsplash.com/photo-1507473885765-e6ed057f782c?w=800&q=80',
+  'https://images.unsplash.com/photo-1618220179428-22790b461013?w=800&q=80',
 ];
 
 export const fallbackProductImage = (productId) => {

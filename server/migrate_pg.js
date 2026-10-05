@@ -159,6 +159,7 @@ const compatibilitySql = `
 ALTER TABLE orders ALTER COLUMN user_id DROP NOT NULL;
 ALTER TABLE addresses ALTER COLUMN user_id DROP NOT NULL;
 ALTER TABLE addresses ADD COLUMN IF NOT EXISTS is_deleted BOOLEAN DEFAULT FALSE;
+ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'cod';
 UPDATE orders
 SET tracking_number = 'TPS-TRK-' || id || LPAD(FLOOR(RANDOM() * 10000)::text, 4, '0'),
     carrier = COALESCE(NULLIF(carrier, ''), 'Standard Shipping'),

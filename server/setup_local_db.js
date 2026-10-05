@@ -124,6 +124,7 @@ async function setup() {
       coupon_id INTEGER REFERENCES coupons(id),
       discount_amount NUMERIC(10,2) DEFAULT 0.00,
       payment_status VARCHAR(20) DEFAULT 'pending',
+      payment_method VARCHAR(50) DEFAULT 'cod',
       order_status VARCHAR(20) DEFAULT 'pending',
       tracking_number VARCHAR(100),
       carrier VARCHAR(100),
@@ -137,6 +138,8 @@ async function setup() {
       created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
       updated_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
     );
+
+    ALTER TABLE orders ADD COLUMN IF NOT EXISTS payment_method VARCHAR(50) DEFAULT 'cod';
 
     CREATE TABLE IF NOT EXISTS order_returns (
       id SERIAL PRIMARY KEY,
@@ -237,8 +240,6 @@ async function setup() {
     // Seed Products
     const products = [
       { name: 'Wooden Jewellery Box', slug: 'wooden-jewellery-box', description: 'Handcrafted solid wood jewellery box with brass accents. Perfect for organizing rings and small accessories.', price: 85.00, discount_price: null, catSlug: 'organization', stock: 15, rating: 4.8, review_count: 24, is_featured: true, is_on_sale: false, badge: 'Best Seller', is_returnable: true, return_window_days: 7, return_policy_type: '7 Days Returnable', is_open_box_delivery: true, image_url: 'https://images.unsplash.com/photo-1515562141207-7a88fb7ce338?w=800&q=80' },
-      { name: 'Minimalist Desk Organizer', slug: 'minimalist-desk-organizer', description: 'Sleek matte finish desk organizer to keep your workspace clutter-free.', price: 45.00, discount_price: 39.99, catSlug: 'organization', stock: 30, rating: 4.5, review_count: 12, is_featured: true, is_on_sale: true, badge: 'Top Rated', is_returnable: true, return_window_days: 7, return_policy_type: '7 Days Returnable', is_open_box_delivery: false, image_url: 'https://images.unsplash.com/photo-1594042898950-c8e4a7c06eb1?w=800&q=80' },
-      { name: 'Ceramic Vase Set', slug: 'ceramic-vase-set', description: 'Set of three minimalist ceramic vases in neutral tones. Ideal for dried flowers.', price: 60.00, discount_price: null, catSlug: 'home-decor', stock: 10, rating: 4.9, review_count: 45, is_featured: true, is_on_sale: false, badge: 'Best Seller', is_returnable: true, return_window_days: 7, return_policy_type: '7 Days Returnable', is_open_box_delivery: true, image_url: 'https://images.unsplash.com/photo-1613564998797-15d97f80f1d0?w=800&q=80' },
       { name: 'Handcrafted Incense Holder', slug: 'handcrafted-incense-holder', description: 'Brass and marble incense holder. Adds a touch of zen to any room.', price: 25.00, discount_price: null, catSlug: 'wellness', stock: 50, rating: 4.6, review_count: 8, is_featured: true, is_on_sale: false, badge: null, is_returnable: true, return_window_days: 7, return_policy_type: '7 Days Returnable', is_open_box_delivery: false, image_url: 'https://images.unsplash.com/photo-1618220179428-22790b461013?w=800&q=80' },
       { name: 'Linen Throw Blanket', slug: 'linen-throw-blanket', description: 'Premium 100% organic linen throw blanket in beige.', price: 110.00, discount_price: 89.99, catSlug: 'home-decor', stock: 5, rating: 5.0, review_count: 3, is_featured: false, is_on_sale: true, badge: 'Top Rated', is_returnable: true, return_window_days: 10, return_policy_type: '10 Days Returnable', is_open_box_delivery: false, image_url: 'https://images.unsplash.com/photo-1583847268964-b28dc8f51f92?w=800&q=80' },
       { name: 'Concrete Coaster Set', slug: 'concrete-coaster-set', description: 'Set of four industrial-style concrete coasters with cork bases.', price: 35.00, discount_price: null, catSlug: 'home-decor', stock: 40, rating: 4.7, review_count: 18, is_featured: false, is_on_sale: false, badge: 'New Arrival', is_returnable: true, return_window_days: 7, return_policy_type: '7 Days Returnable', is_open_box_delivery: false, image_url: 'https://images.unsplash.com/photo-1505691938895-1758d7feb511?w=800&q=80' },
